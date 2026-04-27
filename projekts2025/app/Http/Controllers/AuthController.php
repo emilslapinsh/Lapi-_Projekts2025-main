@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -26,7 +27,7 @@ class AuthController extends Controller
             'email.unique' => 'Šis e-pasts jau ir reģistrēts.',
             'password.required' => 'Parole ir obligāta.',
             'password.confirmed' => 'Paroles nesakrīt.',
-            'password.min' => 'Parolei jābūt vismaz 6 simboliem.'
+            'password.min' => 'Parolei jābūt vismaz 6 simboliem.',
         ]);
 
         $user = User::create([
@@ -52,7 +53,7 @@ class AuthController extends Controller
             'password' => 'required',
         ], [
             'username.required' => 'Lietotājvārds ir obligāts.',
-            'password.required' => 'Parole ir obligāta.'
+            'password.required' => 'Parole ir obligāta.',
         ]);
 
         if (Auth::attempt($request->only('username', 'password'))) {
@@ -60,7 +61,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'username' => 'Nepareizs lietotājvārds vai parole.'
+            'username' => 'Nepareizs lietotājvārds vai parole.',
         ])->withInput();
     }
 

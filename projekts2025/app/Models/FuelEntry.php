@@ -39,7 +39,9 @@ class FuelEntry extends Model
     public function getPricePerLiterAttribute(): ?float
     {
         $liters = (float) $this->liters;
-        if ($liters <= 0) return null;
+        if ($liters <= 0) {
+            return null;
+        }
 
         return (float) $this->total_eur / $liters;
     }

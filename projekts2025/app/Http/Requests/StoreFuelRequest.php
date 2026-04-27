@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\FuelEntry;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreFuelRequest extends FormRequest
@@ -16,7 +17,22 @@ class StoreFuelRequest extends FormRequest
         return [
             'car_id' => ['required', 'integer', 'exists:cars,id'],
             'date' => ['required', 'date'],
-            'odometer_km' => ['required', 'integer', 'min:0'],
+            'odometer_km' => [
+                'required',
+                'integer',
+                'min:0',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $carId = (int) $this->input('car_id');
+                    if ($carId < 1) {
+                        return;
+                    }
+
+                    $max = FuelEntry::query()->where('car_id', $carId)->max('odometer_km');
+                    if ($max !== null && (int) $value < (int) $max) {
+                        $fail('Odometrs nevar būt mazāks par lielāko esošo vērtību šim auto (šobrīd '.$max.' km).');
+                    }
+                },
+            ],
             'liters' => ['required', 'numeric', 'min:0.01'],
             'total_eur' => ['required', 'numeric', 'min:0'],
             'fuel_type' => ['required', 'string', 'max:30'],

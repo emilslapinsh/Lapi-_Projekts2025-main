@@ -13,8 +13,6 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * 
-     *
      * @var list<string>
      */
     protected $fillable = [
@@ -24,8 +22,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * 
-     *
      * @var list<string>
      */
     protected $hidden = [
@@ -34,8 +30,6 @@ class User extends Authenticatable
     ];
 
     /**
-     * 
-     *
      * @return array<string, string>
      */
     protected function casts(): array
@@ -53,7 +47,23 @@ class User extends Authenticatable
 
     public function cars()
     {
-    return $this->belongsToMany(\App\Models\Car::class)->withPivot('confirmed')->withTimestamps();
+        return $this->belongsToMany(\App\Models\Car::class)->withPivot('confirmed')->withTimestamps();
     }
 
+    public function isAdmin(): bool
+    {
+        $usernames = config('admin.usernames', []);
+        if (! is_array($usernames) || count($usernames) === 0) {
+            return false;
+        }
+
+        $mine = strtolower((string) $this->username);
+        foreach ($usernames as $u) {
+            if ($mine === strtolower((string) $u)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

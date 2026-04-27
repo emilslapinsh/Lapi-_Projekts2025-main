@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Support\EventCalendarTypes;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EventController extends Controller
 {
@@ -11,7 +13,10 @@ class EventController extends Controller
     {
         $title = $request->input('title');
 
-        $query = Event::where('user_id', auth()->id());
+        $query = Event::query()
+            ->where('user_id', auth()->id())
+            ->orderBy('date')
+            ->orderBy('id');
 
         if ($title) {
             $query->where('title', $title);
@@ -19,33 +24,72 @@ class EventController extends Controller
 
         $events = $query->get();
 
-        $formattedEvents = $events->map(function ($event) {
-            return [
-                'id' => $event->id,
-                'title' => $event->title,
-                'start' => $event->date,
-                'description' => $event->description
-            ];
-        });
-
-        return response()->json($formattedEvents);
+        return response()->json(
+            $events->map(function (Event $event) {
+                return [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'start' => $event->date->format('Y-m-d'),
+                    'extendedProps' => [
+                        'description' => $event->description ?? '',
+                    ],
+                ];
+            })
+        );
     }
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'date' => 'required|date',
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:100', Rule::in(EventCalendarTypes::TYPES)],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'date' => ['required', 'date'],
         ]);
 
-        Event::create([
-            'title' => $validatedData['title'],
-            'description' => $validatedData['description'],
-            'date' => $validatedData['date'],
+        Event::query()->create([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'date' => $validated['date'],
             'user_id' => auth()->id(),
         ]);
 
         return response()->json(['success' => true]);
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        $this->authorizeEvent($event);
+
+        $allowedTitles = array_values(array_unique(array_merge(
+            EventCalendarTypes::TYPES,
+            [(string) $event->title],
+        )));
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:100', Rule::in($allowedTitles)],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'date' => ['required', 'date'],
+        ]);
+
+        $event->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'date' => $validated['date'],
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function destroy(Event $event)
+    {
+        $this->authorizeEvent($event);
+        $event->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    private function authorizeEvent(Event $event): void
+    {
+        abort_unless((int) $event->user_id === (int) auth()->id(), 403);
     }
 }

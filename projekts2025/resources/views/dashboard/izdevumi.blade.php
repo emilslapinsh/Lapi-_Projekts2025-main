@@ -1,407 +1,851 @@
 <!DOCTYPE html>
 <html lang="lv">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Izdevumu pārvaldība</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Izdevumu pārvaldība</title>
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.flatpickr-lv-head')
+    </head>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+    <body class="min-h-screen bg-zinc-950 text-zinc-100">
+        <div class="pointer-events-none fixed inset-0">
+            <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
+            <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-zinc-700/10 blur-3xl"></div>
+        </div>
 
-<body class="min-h-screen bg-zinc-950 text-zinc-100">
-    <!-- Background glow -->
-    <div class="pointer-events-none fixed inset-0">
-        <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
-        <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-zinc-700/10 blur-3xl"></div>
-    </div>
+        @php
+            $tab = $tab ?? 'izdevumi';
+            $maxBar = ! empty($insights['monthly_bars']) ? max(1.0, (float) collect($insights['monthly_bars'])->max('total')) : 1.0;
+            $preserve = array_filter(request()->only(['tab', 'car_id', 'type', 'period', 'date_from', 'date_to', 'sort']), fn ($v) => $v !== null && $v !== '');
+            $queryForTab = array_filter(request()->only(['car_id', 'type', 'period', 'date_from', 'date_to', 'sort']), fn ($v) => $v !== null && $v !== '');
+        @endphp
 
-    <div class="relative mx-auto min-h-screen max-w-6xl px-6">
-        <!-- Header -->
-        <header class="flex items-center justify-between py-8">
-            <div>
-                <h1 class="text-2xl font-bold tracking-wide text-zinc-100 uppercase">
-                    Izdevumu pārvaldība
-                </h1>
-                <p class="mt-1 text-sm text-zinc-400">
-                    Pievienojiet izdevumus un analizējiet auto izmaksas (kopā, mēnesī, €/km).
-                </p>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <a href="{{ route('home') }}"
-                   class="rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700">
-                    Uz paneli
-                </a>
-
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit"
-                            class="rounded-lg bg-red-600 px-5 py-2.5 text-base font-semibold text-white hover:bg-red-500">
-                        Iziet
-                    </button>
-                </form>
-            </div>
-        </header>
-
-        <main class="pb-12">
-            {{-- Success message --}}
-            @if(session('success'))
-                <div class="mb-6 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
-                    <div class="text-sm font-semibold text-emerald-200">Veiksmīgi</div>
-                    <div class="mt-1 text-sm text-emerald-100/80">{{ session('success') }}</div>
-                </div>
-            @endif
-
-            {{-- Validation errors --}}
-            @if ($errors->any())
-                <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
-                    <div class="text-sm font-semibold text-red-200">Kļūda</div>
-                    <ul class="mt-2 space-y-1 text-sm text-red-100/80">
-                        @foreach ($errors->all() as $error)
-                            <li>• {{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            {{-- ✅ Pending share requests --}}
-            @if(isset($pendingCars) && $pendingCars->count() > 0)
-                <section class="mb-6 rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
-                    <h2 class="text-lg font-semibold text-zinc-100">Koplietošanas pieprasījumi</h2>
-                    <p class="mt-1 text-sm text-zinc-400">
-                        Jums ir neapstiprināti koplietošanas pieprasījumi. Apstipriniet, lai auto parādītos sarakstā.
-                    </p>
-
-                    <div class="mt-4 space-y-3">
-                        @foreach($pendingCars as $pc)
-                            <div class="flex flex-col gap-3 rounded-xl bg-zinc-950/40 p-4 ring-1 ring-white/10 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <div class="font-semibold">
-                                        {{ $pc->brand }} {{ $pc->model }} ({{ $pc->year }})
-                                    </div>
-                                    <div class="text-sm text-zinc-400">
-                                        Statuss: gaida apstiprinājumu
-                                    </div>
-                                </div>
-
-                                <form method="POST" action="{{ route('cars.confirm', $pc->id) }}">
-                                    @csrf
-                                    <button class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500">
-                                        Apstiprināt
-                                    </button>
-                                </form>
-                            </div>
-                        @endforeach
-                    </div>
-                </section>
-            @endif
-
-            {{-- Car picker + stats --}}
-            <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div class="flex-1">
-                        <label class="text-sm font-semibold text-zinc-200">Izvēlies auto</label>
-
-                        <form method="GET" action="{{ route('izdevumi.index') }}">
-                            <select name="car_id"
-                                    onchange="this.form.submit()"
-                                    class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50">
-                                @forelse($cars as $car)
-                                    <option value="{{ $car->id }}" {{ optional($selectedCar)->id === $car->id ? 'selected' : '' }}>
-                                        {{ $car->brand }} {{ $car->model }} ({{ $car->year }})
-                                    </option>
-                                @empty
-                                    <option value="">Nav apstiprinātu auto</option>
-                                @endforelse
-                            </select>
-                        </form>
-
-                        @if(!$selectedCar)
-                            <p class="mt-3 text-sm text-zinc-400">
-                                Nav apstiprināta auto. Ja tev ir koplietošanas pieprasījums, apstiprini to augstāk.
-                            </p>
-                        @endif
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-                        <div class="rounded-2xl bg-zinc-950/50 p-4 ring-1 ring-white/10">
-                            <div class="text-xs text-zinc-500">Kopā (€)</div>
-                            <div class="mt-1 text-lg font-semibold">{{ number_format($stats['total'] ?? 0, 2) }}</div>
-                        </div>
-
-                        <div class="rounded-2xl bg-zinc-950/50 p-4 ring-1 ring-white/10">
-                            <div class="text-xs text-zinc-500">Šomēnes (€)</div>
-                            <div class="mt-1 text-lg font-semibold">{{ number_format($stats['month'] ?? 0, 2) }}</div>
-                        </div>
-
-                        <div class="rounded-2xl bg-zinc-950/50 p-4 ring-1 ring-white/10">
-                            <div class="text-xs text-zinc-500">€/km</div>
-                            <div class="mt-1 text-lg font-semibold">
-                                {{ $stats['per_km'] !== null ? number_format($stats['per_km'], 4) : '—' }}
-                            </div>
-                        </div>
-
-                        <div class="rounded-2xl bg-zinc-950/50 p-4 ring-1 ring-white/10">
-                            <div class="text-xs text-zinc-500">Pēdējais nobraukums</div>
-                            <div class="mt-1 text-lg font-semibold">
-                                {{ $stats['last_mileage'] !== null ? $stats['last_mileage'].' km' : '—' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @if($selectedCar)
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <a href="{{ route('expenses.export', ['car_id' => $selectedCar->id]) }}"
-                           class="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700">
-                            Eksportēt CSV
+        <div class="relative mx-auto min-h-screen max-w-6xl px-6">
+            <header class="flex flex-col gap-4 py-8 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide text-zinc-100 uppercase">Izdevumu pārvaldība</h1>
+                    <p class="mt-1 max-w-2xl text-sm text-zinc-400">
+                        Izdevumu žurnāls, kopsavilkums un analītika. Degvielu reģistrē atsevišķi sadaļā
+                        <a
+                            href="{{ $selectedCar ? route('degviela.index', ['car_id' => $selectedCar->id]) : route('degviela.index') }}"
+                            class="font-semibold text-red-400 hover:text-red-300"
+                        >
+                            Degvielas patēriņš
                         </a>
+                        .
+                    </p>
+                </div>
+
+                <div class="flex shrink-0 flex-wrap items-center gap-3">
+                    <a
+                        href="{{ route('home') }}"
+                        class="rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
+                    >
+                        Uz paneli
+                    </a>
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-red-600 px-5 py-2.5 text-base font-semibold text-white hover:bg-red-500"
+                        >
+                            Iziet
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="pb-12">
+                @if (session('success'))
+                    <div class="mb-6 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
+                        <div class="text-sm font-semibold text-emerald-200">Veiksmīgi</div>
+                        <div class="mt-1 text-sm text-emerald-100/80">{{ session('success') }}</div>
                     </div>
                 @endif
-            </section>
 
-            <div class="mt-6 grid gap-6 lg:grid-cols-2">
-                {{-- Add expense --}}
-                <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
-                    <h2 class="text-lg font-semibold text-zinc-100">Pievienot izdevumu</h2>
-                    <p class="mt-1 text-sm text-zinc-400">
-                        Pievieno ierakstu, lai redzētu reālās auto uzturēšanas izmaksas.
-                    </p>
+                @if (session('error'))
+                    <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
+                        <div class="text-sm font-semibold text-red-200">Uzmanību</div>
+                        <div class="mt-1 text-sm text-red-100/80">{{ session('error') }}</div>
+                    </div>
+                @endif
 
-                    @if($selectedCar)
-                        <form method="POST" action="{{ route('expenses.store') }}" class="mt-6 space-y-4">
-                            @csrf
-                            <input type="hidden" name="car_id" value="{{ $selectedCar->id }}">
+                @if ($errors->any())
+                    <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
+                        <div class="text-sm font-semibold text-red-200">Kļūda</div>
+                        <ul class="mt-2 space-y-1 text-sm text-red-100/80">
+                            @foreach ($errors->all() as $error)
+                                <li>• {{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="text-sm font-semibold text-zinc-200">Tips</label>
-                                    <select name="type" required
-                                            class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50">
-                                        <option value="Degviela">Degviela</option>
-                                        <option value="Serviss">Serviss</option>
-                                        <option value="Remonts">Remonts</option>
-                                        <option value="Apdrošināšana">Apdrošināšana</option>
-                                        <option value="Nodokļi">Nodokļi</option>
-                                        <option value="Cits">Cits</option>
+                @if (isset($pendingCars) && $pendingCars->count() > 0)
+                    <section class="mb-6 rounded-2xl bg-amber-500/10 p-6 ring-1 ring-amber-500/25">
+                        <h2 class="text-lg font-semibold text-amber-100">Koplietošanas pieprasījumi</h2>
+                        <p class="mt-1 text-sm text-amber-100/70">
+                            Tev ir uzaicinājums koplietot auto. Apstiprinot, redzēsi šī auto izdevumus savā kontā.
+                        </p>
+                        <ul class="mt-4 space-y-3">
+                            @foreach ($pendingCars as $pc)
+                                <li
+                                    class="flex flex-col gap-3 rounded-xl bg-zinc-950/40 p-4 ring-1 ring-white/10 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                    <div class="text-sm text-zinc-200">
+                                        <span class="font-semibold">{{ $pc->brand }} {{ $pc->model }}</span>
+                                        <span class="text-zinc-500">({{ $pc->year }})</span>
+                                    </div>
+                                    <form method="POST" action="{{ route('cars.confirm', $pc) }}" class="shrink-0">
+                                        @csrf
+                                        <button
+                                            type="submit"
+                                            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+                                        >
+                                            Apstiprināt koplietošanu
+                                        </button>
+                                    </form>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
+
+                <nav class="mb-6 flex gap-2 rounded-2xl bg-zinc-900/50 p-2 ring-1 ring-white/10">
+                    <a
+                        href="{{ route('izdevumi.index', array_merge($queryForTab, ['tab' => 'izdevumi'])) }}"
+                        class="flex-1 rounded-xl px-4 py-3 text-center text-sm font-semibold transition {{ $tab === 'izdevumi' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100' }}"
+                    >
+                        Izdevumi un analītika
+                    </a>
+                    <a
+                        href="{{ route('izdevumi.index', array_merge($queryForTab, ['tab' => 'auto'])) }}"
+                        class="flex-1 rounded-xl px-4 py-3 text-center text-sm font-semibold transition {{ $tab === 'auto' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100' }}"
+                    >
+                        Auto un koplietošana
+                    </a>
+                </nav>
+
+                {{-- === Izdevumi === --}}
+                <div class="{{ $tab === 'izdevumi' ? '' : 'hidden' }} space-y-6">
+                    @if ($cars->isEmpty())
+                        <section class="rounded-2xl bg-zinc-900/50 p-8 text-center ring-1 ring-white/10">
+                            <p class="text-sm text-zinc-400">
+                                Vēl nav pievienots neviens auto. Sadaļā
+                                <a
+                                    href="{{ route('izdevumi.index', ['tab' => 'auto']) }}"
+                                    class="font-semibold text-red-400 hover:text-red-300"
+                                >
+                                    Auto un koplietošana
+                                </a>
+                                pievieno transportlīdzekli, lai sāktu reģistrēt izdevumus.
+                            </p>
+                        </section>
+                    @else
+                        <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                            <h2 class="text-lg font-semibold text-zinc-100">Izvēlētais auto</h2>
+                            <form
+                                method="GET"
+                                action="{{ route('izdevumi.index') }}"
+                                class="mt-4 flex flex-wrap items-end gap-4"
+                            >
+                                <input type="hidden" name="tab" value="izdevumi" />
+                                @foreach (['type', 'period', 'date_from', 'date_to', 'sort'] as $qk)
+                                    @if (request()->filled($qk))
+                                        <input type="hidden" name="{{ $qk }}" value="{{ request($qk) }}" />
+                                    @endif
+                                @endforeach
+
+                                <div class="min-w-[240px] flex-1">
+                                    <label class="text-sm font-semibold text-zinc-200">Auto</label>
+                                    <select
+                                        name="car_id"
+                                        onchange="this.form.submit()"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    >
+                                        @foreach ($cars as $car)
+                                            <option
+                                                value="{{ $car->id }}"
+                                                @selected($selectedCar && (int) $selectedCar->id === (int) $car->id)
+                                            >
+                                                {{ $car->brand }} {{ $car->model }} ({{ $car->year }})
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
+                            </form>
+                        </section>
 
-                                <div>
-                                    <label class="text-sm font-semibold text-zinc-200">Datums</label>
-                                    <input type="date" name="date" required value="{{ now()->toDateString() }}"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                        <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                            <h2 class="text-lg font-semibold text-zinc-100">Kopsavilkums</h2>
+                            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                <div class="rounded-xl bg-zinc-950/50 p-4 ring-1 ring-white/5">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                                        Kopā (visi ieraksti)
+                                    </div>
+                                    <div class="mt-2 text-2xl font-bold tabular-nums text-zinc-100">
+                                        {{ number_format($stats['total'], 2) }} €
+                                    </div>
+                                </div>
+                                <div class="rounded-xl bg-zinc-950/50 p-4 ring-1 ring-white/5">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                                        Šis mēnesis
+                                    </div>
+                                    <div class="mt-2 text-2xl font-bold tabular-nums text-zinc-100">
+                                        {{ number_format($stats['month'], 2) }} €
+                                    </div>
+                                </div>
+                                <div class="rounded-xl bg-zinc-950/50 p-4 ring-1 ring-white/5">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                                        € / km (aptuveni)
+                                    </div>
+                                    <div class="mt-2 text-2xl font-bold tabular-nums text-zinc-100">
+                                        {{ $stats['per_km'] !== null ? number_format($stats['per_km'], 4) . ' €' : '—' }}
+                                    </div>
+                                </div>
+                                <div class="rounded-xl bg-zinc-950/50 p-4 ring-1 ring-white/5">
+                                    <div class="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                                        Pēdējais nobraukums
+                                    </div>
+                                    <div class="mt-2 text-2xl font-bold tabular-nums text-zinc-100">
+                                        {{ $stats['last_mileage'] !== null ? number_format($stats['last_mileage']) . ' km' : '—' }}
+                                    </div>
                                 </div>
                             </div>
+                            <div class="mt-4 flex flex-wrap gap-3">
+                                <a
+                                    href="{{ route('expenses.export', ['car_id' => $selectedCar->id]) }}"
+                                    class="inline-flex rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                >
+                                    Eksportēt
+                                </a>
+                                <a
+                                    href="{{ route('degviela.index', ['car_id' => $selectedCar->id]) }}"
+                                    class="inline-flex rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                >
+                                    Uz degvielas žurnālu
+                                </a>
+                            </div>
+                        </section>
 
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="text-sm font-semibold text-zinc-200">Summa (€)</label>
-                                    <input type="number" name="amount" step="0.01" min="0" required
-                                           placeholder="Piem.: 45.50"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
-                                </div>
+                        <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                            <h2 class="text-lg font-semibold text-zinc-100">Analītika</h2>
+                            <p class="mt-1 text-sm text-zinc-400">Pēdējie 6 mēneši</p>
 
-                                <div>
-                                    <label class="text-sm font-semibold text-zinc-200">Nobraukums (km) (nav obligāts)</label>
-                                    <input type="number" name="mileage" min="0"
-                                           placeholder="Piem.: 201500"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
-                                </div>
+                            <div class="mt-4 space-y-3">
+                                @foreach ($insights['monthly_bars'] as $bar)
+                                    @php
+                                        $w = $maxBar > 0 ? round(100 * ($bar['total'] / $maxBar), 2) : 0;
+                                    @endphp
+
+                                    <div>
+                                        <div class="flex justify-between text-xs text-zinc-400">
+                                            <span>{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums font-semibold text-zinc-200">
+                                                {{ number_format($bar['total'], 2) }} €
+                                            </span>
+                                        </div>
+                                        <div
+                                            class="mt-1 h-2 overflow-hidden rounded-full bg-zinc-950/80 ring-1 ring-white/5"
+                                        >
+                                            <div
+                                                class="h-full rounded-full bg-red-600/80 transition-all"
+                                                style="width: {{ $w }}%"
+                                            ></div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
 
-                            <div>
-                                <label class="text-sm font-semibold text-zinc-200">Apraksts (nav obligāts)</label>
-                                <input type="text" name="description" maxlength="255"
-                                       placeholder="Piem.: Eļļas maiņa, riepu maiņa, uzpilde..."
-                                       class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                            <div class="mt-6 grid gap-4 border-t border-white/10 pt-6 lg:grid-cols-2">
+                                <div class="rounded-xl bg-zinc-950/40 p-4 ring-1 ring-white/5">
+                                    <div class="text-sm font-semibold text-zinc-200">Filtrētā atlase</div>
+                                    <p class="mt-2 text-sm text-zinc-400">
+                                        <span class="tabular-nums font-semibold text-zinc-100">
+                                            {{ $insights['count_filtered'] }}
+                                        </span>
+                                        ieraksti, kopsumma
+                                        <span class="tabular-nums font-semibold text-zinc-100">
+                                            {{ number_format($filteredSubtotal, 2) }} €
+                                        </span>
+                                        .
+                                    </p>
+                                    @if ($insights['biggest_filtered'])
+                                        @php
+                                            $bg = $insights['biggest_filtered'];
+                                        @endphp
+
+                                        <p class="mt-2 text-sm text-zinc-400">
+                                            Lielākais izdevums atlases ietvaros:
+                                            <span class="font-semibold text-zinc-200">
+                                                {{ number_format($bg->amount, 2) }} €
+                                            </span>
+                                            ({{ $bg->type }}, {{ $bg->date->format('Y-m-d') }}).
+                                        </p>
+                                    @endif
+                                </div>
+                                <div class="rounded-xl bg-zinc-950/40 p-4 ring-1 ring-white/5">
+                                    <div class="text-sm font-semibold text-zinc-200">Sadalījums pēc veida</div>
+                                    @if ($filterTypeTotals->isEmpty())
+                                        <p class="mt-2 text-sm text-zinc-500">Nav datu šim filtram.</p>
+                                    @else
+                                        <ul class="mt-2 space-y-2 text-sm">
+                                            @foreach ($filterTypeTotals as $row)
+                                                <li class="flex justify-between gap-2 text-zinc-400">
+                                                    <span>{{ $row->type }}</span>
+                                                    <span class="tabular-nums font-semibold text-zinc-200">
+                                                        {{ number_format((float) $row->total, 2) }} €
+                                                    </span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                            <h2 class="text-lg font-semibold text-zinc-100">Filtrs un kārtošana</h2>
+                            <form
+                                method="GET"
+                                action="{{ route('izdevumi.index') }}"
+                                class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                            >
+                                <input type="hidden" name="tab" value="izdevumi" />
+                                <input type="hidden" name="car_id" value="{{ $selectedCar->id }}" />
+
+                                <div>
+                                    <label class="text-sm font-semibold text-zinc-200">Veids</label>
+                                    <select
+                                        name="type"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    >
+                                        <option value="" @selected($filterType === '')>Visi</option>
+                                        @foreach ($distinctTypes as $dt)
+                                            <option
+                                                value="{{ $dt }}"
+                                                @selected((string) $filterType === (string) $dt)
+                                            >
+                                                {{ $dt }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-zinc-200">Periods</label>
+                                    <select
+                                        name="period"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    >
+                                        <option value="all" @selected($filterPeriod === 'all')>Viss laiks</option>
+                                        <option value="this_month" @selected($filterPeriod === 'this_month')>
+                                            Šis mēnesis
+                                        </option>
+                                        <option value="this_year" @selected($filterPeriod === 'this_year')>
+                                            Šis gads
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-zinc-200">Kārtot pēc</label>
+                                    <select
+                                        name="sort"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    >
+                                        <option value="date_desc" @selected($sort === 'date_desc')>
+                                            Datums — jaunākie pirmie
+                                        </option>
+                                        <option value="date_asc" @selected($sort === 'date_asc')>
+                                            Datums — vecākie pirmie
+                                        </option>
+                                        <option value="amount_desc" @selected($sort === 'amount_desc')>
+                                            Summa — lielākās pirmās
+                                        </option>
+                                        <option value="amount_asc" @selected($sort === 'amount_asc')>
+                                            Summa — mazākās pirmās
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-zinc-200">Datums no</label>
+                                    <input
+                                        type="text"
+                                        name="date_from"
+                                        value="{{ $filterDateFrom }}"
+                                        autocomplete="off"
+                                        inputmode="none"
+                                        placeholder="dd.mm.gggg"
+                                        class="js-flatpickr mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-zinc-200">Datums līdz</label>
+                                    <input
+                                        type="text"
+                                        name="date_to"
+                                        value="{{ $filterDateTo }}"
+                                        autocomplete="off"
+                                        inputmode="none"
+                                        placeholder="dd.mm.gggg"
+                                        class="js-flatpickr mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
+                                </div>
+                                <div class="flex items-end gap-2">
+                                    <button
+                                        type="submit"
+                                        class="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-500 sm:w-auto"
+                                    >
+                                        Piemērot
+                                    </button>
+                                    <a
+                                        href="{{ route('izdevumi.index', ['tab' => 'izdevumi', 'car_id' => $selectedCar->id]) }}"
+                                        class="inline-flex w-full items-center justify-center rounded-xl bg-zinc-800 px-4 py-3 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700 sm:w-auto"
+                                    >
+                                        Notīrīt
+                                    </a>
+                                </div>
+                            </form>
+                        </section>
+
+                        <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                            <h2 class="text-lg font-semibold text-zinc-100">Pievienot izdevumu</h2>
+                            <p class="mt-1 text-sm text-zinc-400">Izvēlies veidu un aizpildi laukus.</p>
+
+                            <form method="POST" action="{{ route('expenses.store') }}" class="mt-6 space-y-4">
+                                @csrf
+                                <input type="hidden" name="car_id" value="{{ $selectedCar->id }}" />
+                                <input type="hidden" name="tab" value="izdevumi" />
+                                @if (request()->filled('type'))
+                                    <input type="hidden" name="filter_type" value="{{ request('type') }}" />
+                                @endif
+
+                                @foreach (['period', 'date_from', 'date_to', 'sort'] as $qk)
+                                    @if (request()->filled($qk))
+                                        <input type="hidden" name="{{ $qk }}" value="{{ request($qk) }}" />
+                                    @endif
+                                @endforeach
+
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="text-sm font-semibold text-zinc-200">Veids</label>
+                                        <select
+                                            name="type"
+                                            id="add_expense_type"
+                                            required
+                                            class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                        >
+                                            @foreach ($expenseTypes as $t)
+                                                <option value="{{ $t }}" @selected(old('type') === $t)>
+                                                    {{ $t }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <p
+                                            id="add_type_hint"
+                                            class="mt-2 min-h-[2.5rem] text-xs leading-relaxed text-zinc-500"
+                                        ></p>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-semibold text-zinc-200">Datums</label>
+                                        <input
+                                            type="text"
+                                            name="date"
+                                            required
+                                            value="{{ old('date', now()->toDateString()) }}"
+                                            autocomplete="off"
+                                            inputmode="none"
+                                            placeholder="Izvēlies datumu…"
+                                            class="js-flatpickr mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="text-sm font-semibold text-zinc-200">Summa (€)</label>
+                                        <input
+                                            type="number"
+                                            name="amount"
+                                            step="0.01"
+                                            min="0"
+                                            required
+                                            value="{{ old('amount') }}"
+                                            class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-semibold text-zinc-200">Nobraukums (km)</label>
+                                        <input
+                                            type="number"
+                                            name="mileage"
+                                            min="0"
+                                            value="{{ old('mileage') }}"
+                                            placeholder="nav obligāts"
+                                            class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-semibold text-zinc-200">Apraksts</label>
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        maxlength="255"
+                                        value="{{ old('description') }}"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    class="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                                >
+                                    Saglabāt izdevumu
+                                </button>
+                            </form>
+                        </section>
+
+                        <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <h2 class="text-lg font-semibold text-zinc-100">Izdevumu tabula</h2>
+                                @if ($expensesPaginated)
+                                    <div class="text-sm text-zinc-400">{{ $expensesPaginated->total() }} ieraksti</div>
+                                @endif
                             </div>
 
-                            <button type="submit"
-                                    class="w-full rounded-xl bg-red-600 px-5 py-3 text-base font-semibold text-white hover:bg-red-500">
-                                Pievienot izdevumu
-                            </button>
-                        </form>
-                    @else
-                        <div class="mt-6 text-sm text-zinc-400">
-                            Vispirms pievieno vai apstiprini auto.
-                        </div>
+                            <div class="mt-4 overflow-x-auto">
+                                <table class="w-full min-w-[720px] text-sm">
+                                    <thead
+                                        class="text-left text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                                    >
+                                        <tr class="border-b border-white/10">
+                                            <th class="py-2 pr-3">Datums</th>
+                                            <th class="py-2 pr-3">Tips</th>
+                                            <th class="py-2 pr-3">Summa</th>
+                                            <th class="py-2 pr-3">Nobraukums</th>
+                                            <th class="py-2 pr-3">Apraksts</th>
+                                            <th class="py-2 pr-3">Pievienoja</th>
+                                            <th class="py-2 text-right">Darbības</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($expensesPaginated ?? collect() as $e)
+                                            <tr class="border-b border-white/5">
+                                                <td class="py-3 whitespace-nowrap">{{ $e->date->format('Y-m-d') }}</td>
+                                                <td class="py-3 whitespace-nowrap">{{ $e->type }}</td>
+                                                <td class="py-3 whitespace-nowrap tabular-nums">
+                                                    {{ number_format($e->amount, 2) }} €
+                                                </td>
+                                                <td class="py-3 whitespace-nowrap">
+                                                    {{ $e->mileage ? $e->mileage . ' km' : '—' }}
+                                                </td>
+                                                <td
+                                                    class="py-3 max-w-[200px] truncate text-zinc-300"
+                                                    title="{{ $e->description }}"
+                                                >
+                                                    {{ $e->description ?? '—' }}
+                                                </td>
+                                                <td class="py-3 whitespace-nowrap text-zinc-400">
+                                                    {{ $e->user->username ?? '—' }}
+                                                </td>
+                                                <td class="py-3 text-right whitespace-nowrap">
+                                                    <div class="flex flex-wrap justify-end gap-2">
+                                                        <a
+                                                            href="{{ route('expenses.edit', array_merge(['expense' => $e->id], $preserve)) }}"
+                                                            class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                                        >
+                                                            Labot
+                                                        </a>
+                                                        <form
+                                                            method="POST"
+                                                            action="{{ route('expenses.destroy', $e->id) }}"
+                                                            class="inline"
+                                                            onsubmit="return confirm('Dzēst šo izdevumu?');"
+                                                        >
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            @foreach ($preserve as $k => $v)
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="{{ $k }}"
+                                                                    value="{{ $v }}"
+                                                                />
+                                                            @endforeach
+
+                                                            <button
+                                                                type="submit"
+                                                                class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                                            >
+                                                                Dzēst
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="py-8 text-center text-zinc-400">
+                                                    Nav izdevumu, kas atbilst filtram.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @if ($expensesPaginated && $expensesPaginated->hasPages())
+                                <div class="mt-4 text-sm text-zinc-400">
+                                    {{ $expensesPaginated->links() }}
+                                </div>
+                            @endif
+                        </section>
                     @endif
-                </section>
+                </div>
 
-                {{-- Add car + share --}}
-                <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
-                    <h2 class="text-lg font-semibold text-zinc-100">Auto</h2>
-                    <p class="mt-1 text-sm text-zinc-400">
-                        Pievieno auto vai koplieto ar citu lietotāju.
-                    </p>
+                {{-- === Auto === --}}
+                <div class="{{ $tab === 'auto' ? '' : 'hidden' }} space-y-6">
+                    <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                        <h2 class="text-lg font-semibold text-zinc-100">Pievienot auto</h2>
+                        <p class="mt-1 text-sm text-zinc-400">Jaunais auto tiek automātiski saistīts ar tavu kontu.</p>
 
-                    {{-- Add car --}}
-                    <div class="mt-6">
-                        <h3 class="text-sm font-semibold text-zinc-200">Pievienot auto</h3>
-
-                        <form method="POST" action="{{ route('izdevumi.store') }}" class="mt-4 space-y-4">
+                        <form method="POST" action="{{ route('izdevumi.store') }}" class="mt-6 space-y-4">
                             @csrf
-
+                            <input type="hidden" name="tab" value="auto" />
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="text-sm font-semibold text-zinc-200">Marka</label>
-                                    <input name="brand" required placeholder="Piem.: Audi"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                                    <input
+                                        name="brand"
+                                        required
+                                        placeholder="Piem.: Audi"
+                                        value="{{ old('brand') }}"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
                                 </div>
-
                                 <div>
                                     <label class="text-sm font-semibold text-zinc-200">Modelis</label>
-                                    <input name="model" required placeholder="Piem.: A6"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                                    <input
+                                        name="model"
+                                        required
+                                        placeholder="Piem.: A6"
+                                        value="{{ old('model') }}"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
                                 </div>
                             </div>
-
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="text-sm font-semibold text-zinc-200">Gads</label>
-                                    <input type="number" name="year" required min="1900" max="2099" placeholder="1900–2099"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                                    <input
+                                        type="number"
+                                        name="year"
+                                        required
+                                        min="1900"
+                                        max="2099"
+                                        placeholder="1900–2099"
+                                        value="{{ old('year') }}"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
                                 </div>
-
                                 <div>
                                     <label class="text-sm font-semibold text-zinc-200">Nobraukums (km)</label>
-                                    <input type="number" name="mileage" required min="0" placeholder="Piem.: 200000"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                                    <input
+                                        type="number"
+                                        name="mileage"
+                                        required
+                                        min="0"
+                                        placeholder="Piem.: 200000"
+                                        value="{{ old('mileage') }}"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
                                 </div>
                             </div>
-
-                            <button type="submit"
-                                    class="w-full rounded-xl bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700">
+                            <button
+                                type="submit"
+                                class="w-full rounded-xl bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
+                            >
                                 Pievienot auto
                             </button>
                         </form>
-                    </div>
+                    </section>
 
-                    {{-- Share car --}}
-                    <div class="mt-8">
-                        <h3 class="text-sm font-semibold text-zinc-200">Koplietot auto</h3>
+                    <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
+                        <h2 class="text-lg font-semibold text-zinc-100">Koplietot auto</h2>
+                        <p class="mt-1 text-sm text-zinc-400">
+                            Nosūti uzaicinājumu citam reģistrētam lietotājam. Viņš redzēs pieprasījumu augšā un varēs to
+                            apstiprināt.
+                        </p>
 
-                        @if($cars->isEmpty())
-                            <div class="mt-3 text-sm text-zinc-400">Nav apstiprinātu auto, ko koplietot.</div>
+                        @if ($cars->isEmpty())
+                            <div class="mt-4 text-sm text-zinc-500">Vispirms pievieno auto.</div>
                         @else
-                            <form method="POST" action="" id="shareForm" class="mt-4 space-y-4">
+                            <form method="POST" action="#" id="shareForm" class="mt-6 space-y-4">
                                 @csrf
-
                                 <div>
-                                    <label class="text-sm font-semibold text-zinc-200">Izvēlies auto</label>
-                                    <select name="car_id" required
-                                            class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50">
-                                        @foreach($cars as $car)
+                                    <label class="text-sm font-semibold text-zinc-200">Auto</label>
+                                    <select
+                                        name="car_id"
+                                        id="share_car_id"
+                                        required
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    >
+                                        @foreach ($cars as $car)
                                             <option value="{{ $car->id }}">
                                                 {{ $car->brand }} {{ $car->model }} ({{ $car->year }})
                                             </option>
                                         @endforeach
                                     </select>
                                 </div>
-
                                 <div>
                                     <label class="text-sm font-semibold text-zinc-200">Lietotāja e-pasts</label>
-                                    <input type="email" name="user_email" required placeholder="piemers@epasts.lv"
-                                           class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                                    <input
+                                        type="email"
+                                        name="user_email"
+                                        id="share_user_email"
+                                        required
+                                        placeholder="piemers@epasts.lv"
+                                        class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                    />
                                 </div>
-
-                                <button type="submit"
-                                        class="w-full rounded-xl bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700">
+                                <button
+                                    type="submit"
+                                    class="w-full rounded-xl bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
+                                >
                                     Nosūtīt koplietošanas pieprasījumu
                                 </button>
 
-                                <div id="shareResult" class="hidden rounded-xl bg-zinc-950/50 p-4 ring-1 ring-white/10">
-                                    <div class="text-sm font-semibold text-zinc-100">Ziņojums</div>
-                                    <div id="shareResultText" class="mt-1 text-sm text-zinc-400"></div>
+                                <div id="shareResult" class="hidden rounded-xl p-4 ring-1">
+                                    <div class="text-sm font-semibold">Ziņojums</div>
+                                    <div id="shareResultText" class="mt-1 text-sm"></div>
                                 </div>
                             </form>
                         @endif
-                    </div>
-                </section>
-            </div>
+                    </section>
 
-            {{-- Expenses list --}}
-            <section class="mt-6 rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-zinc-100">Izdevumi (pēdējie 50)</h2>
-                    <div class="text-sm text-zinc-400">{{ $expenses->count() }} ieraksti</div>
-                </div>
-
-                <div class="mt-4 overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-zinc-400">
-                            <tr class="border-b border-white/10">
-                                <th class="py-2 text-left">Datums</th>
-                                <th class="py-2 text-left">Tips</th>
-                                <th class="py-2 text-left">Summa</th>
-                                <th class="py-2 text-left">Nobraukums</th>
-                                <th class="py-2 text-left">Apraksts</th>
-                                <th class="py-2 text-right">Darbības</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($expenses as $e)
-                                <tr class="border-b border-white/5">
-                                    <td class="py-3 whitespace-nowrap">{{ $e->date }}</td>
-                                    <td class="py-3 whitespace-nowrap">{{ $e->type }}</td>
-                                    <td class="py-3 whitespace-nowrap">{{ number_format($e->amount, 2) }} €</td>
-                                    <td class="py-3 whitespace-nowrap">{{ $e->mileage ? $e->mileage.' km' : '—' }}</td>
-                                    <td class="py-3 text-zinc-300">{{ $e->description ?? '—' }}</td>
-                                    <td class="py-3 text-right whitespace-nowrap">
-                                        <form method="POST" action="{{ route('expenses.destroy', $e->id) }}"
-                                              onsubmit="return confirm('Dzēst šo izdevumu?');">
+                    @if ($cars->isNotEmpty())
+                        <section class="rounded-2xl border border-red-500/25 bg-red-500/5 p-6 ring-1 ring-red-500/20">
+                            <h2 class="text-lg font-semibold text-red-200">Dzēst auto</h2>
+                            <p class="mt-1 text-sm text-zinc-400">
+                                Neatgriezeniski dzēš auto ierakstu, visus izdevumus, degvielas žurnālu un koplietošanas
+                                saites ar citiem lietotājiem. Ja auto koplieto vairāki apstiprināti lietotāji, tas
+                                pazudīs visiem.
+                            </p>
+                            <ul class="mt-4 space-y-3">
+                                @foreach ($cars as $car)
+                                    <li
+                                        class="flex flex-col gap-3 rounded-xl bg-zinc-950/40 p-4 ring-1 ring-white/10 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <div class="text-sm text-zinc-200">
+                                            <span class="font-semibold">{{ $car->brand }} {{ $car->model }}</span>
+                                            <span class="text-zinc-500">({{ $car->year }})</span>
+                                        </div>
+                                        <form
+                                            method="POST"
+                                            action="{{ route('cars.destroy', $car) }}"
+                                            class="shrink-0"
+                                            onsubmit="
+                                                return confirm(
+                                                    'Dzēst auto {{ $car->brand }} {{ $car->model }} ({{ $car->year }})? Tiks dzēsti arī visi izdevumi un degvielas ieraksti.'
+                                                );
+                                            "
+                                        >
                                             @csrf
                                             @method('DELETE')
-                                            <button class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700">
-                                                Dzēst
+                                            <input type="hidden" name="tab" value="auto" />
+                                            <button
+                                                type="submit"
+                                                class="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 sm:w-auto"
+                                            >
+                                                Dzēst šo auto
                                             </button>
                                         </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="py-6 text-zinc-400">
-                                        Nav izdevumu ierakstu.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </section>
+                    @endif
                 </div>
-            </section>
-        </main>
-    </div>
+            </main>
+        </div>
 
-    <script>
-        // Koplietošana ar fetch: nosūtām uz /cars/{carId}/share
-        const shareForm = document.getElementById('shareForm');
-        if (shareForm) {
-            shareForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+        <script>
+            (function () {
+                const hints = @json($typeHints ?? []);
+                const sel = document.getElementById('add_expense_type');
+                const hint = document.getElementById('add_type_hint');
+                if (sel && hint) {
+                    function sync() {
+                        hint.textContent = hints[sel.value] || '';
+                    }
+                    sel.addEventListener('change', sync);
+                    sync();
+                }
+            })();
 
-                const formData = new FormData(this);
-                const carId = formData.get('car_id');
-                const userEmail = formData.get('user_email');
+            (function () {
+                const shareForm = document.getElementById('shareForm');
+                if (!shareForm) return;
 
-                fetch(`/cars/${carId}/share`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ user_email: userEmail })
-                })
-                .then(() => {
+                shareForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const carId = document.getElementById('share_car_id').value;
+                    const userEmail = document.getElementById('share_user_email').value;
+
                     const box = document.getElementById('shareResult');
                     const text = document.getElementById('shareResultText');
-                    text.textContent = 'Koplietošanas pieprasījums nosūtīts.';
-                    box.classList.remove('hidden');
-                })
-                .catch(err => console.error('Error:', err));
-            });
-        }
-    </script>
-</body>
+
+                    box.classList.add('hidden');
+                    text.textContent = '';
+
+                    fetch('{{ url('/cars') }}/' + encodeURIComponent(carId) + '/share', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({ user_email: userEmail }),
+                    })
+                        .then(function (r) {
+                            return r.json().then(function (data) {
+                                return { ok: r.ok, status: r.status, data: data };
+                            });
+                        })
+                        .then(function (res) {
+                            box.classList.remove('hidden');
+                            const msg =
+                                res.data && res.data.message
+                                    ? res.data.message
+                                    : res.ok
+                                      ? 'Gatavs.'
+                                      : 'Kļūda (' + res.status + ').';
+                            text.textContent = msg;
+
+                            const success = res.ok && res.data && res.data.success === true;
+                            if (success) {
+                                box.classList.remove('bg-red-500/10', 'ring-red-500/25');
+                                box.classList.add('bg-emerald-500/10', 'ring-emerald-500/25');
+                                text.classList.remove('text-red-200');
+                                text.classList.add('text-emerald-100/90');
+                            } else {
+                                box.classList.remove('bg-emerald-500/10', 'ring-emerald-500/25');
+                                box.classList.add('bg-red-500/10', 'ring-red-500/25');
+                                text.classList.remove('text-emerald-100/90');
+                                text.classList.add('text-red-200');
+                            }
+                        })
+                        .catch(function () {
+                            box.classList.remove('hidden');
+                            box.classList.add('bg-red-500/10', 'ring-red-500/25');
+                            text.classList.add('text-red-200');
+                            text.textContent =
+                                'Neizdevās nosūtīt pieprasījumu. Pārbaudi savienojumu un mēģini vēlreiz.';
+                        });
+                });
+            })();
+        </script>
+        @include('partials.flatpickr-lv-scripts')
+    </body>
 </html>

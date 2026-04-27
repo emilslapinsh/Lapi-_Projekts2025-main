@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreFuelRequest;
-use App\Models\Car;
 use App\Models\FuelEntry;
+use App\Services\FuelAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -15,7 +15,7 @@ class FuelController extends Controller
     {
         $user = Auth::user();
 
-        // ✅ EXACTLY like CarController@index: confirmed cars + pending requests
+        // Apstiprinātie auto + gaidošās saites (pending) — kā izdevumu sadaļā
         $cars = $user->cars()
             ->wherePivot('confirmed', true)
             ->orderBy('brand')
@@ -42,11 +42,17 @@ class FuelController extends Controller
             'eurl' => [],
         ];
 
+        $intervals = [];
+        $anomalies = [];
+        $fuelMeta = [
+            'full_tank_rows' => 0,
+            'intervals_usable' => 0,
+        ];
+
         if ($cars->isNotEmpty()) {
             $carId = (int) ($request->query('car_id') ?? $cars->first()->id);
             $selectedCar = $cars->firstWhere('id', $carId) ?? $cars->first();
 
-            // Last 50 entries
             $entries = FuelEntry::query()
                 ->where('car_id', $selectedCar->id)
                 ->orderByDesc('date')
@@ -54,68 +60,18 @@ class FuelController extends Controller
                 ->limit(50)
                 ->get();
 
-            // For consumption calculations we need chronological order
             $all = FuelEntry::query()
                 ->where('car_id', $selectedCar->id)
                 ->orderBy('date')
                 ->orderBy('odometer_km')
                 ->get();
 
-            // full-to-full pairs
-            $pairs = [];
-            $prevFull = null;
-
-            foreach ($all as $e) {
-                if (!$e->is_full_tank) {
-                    continue;
-                }
-
-                if ($prevFull) {
-                    $km = (int) $e->odometer_km - (int) $prevFull->odometer_km;
-
-                    if ($km > 0) {
-                        $l100 = ((float) $e->liters / (float) $km) * 100.0;
-                        $eurl = $e->price_per_liter;
-
-                        $pairs[] = [
-                            'date' => $e->date->format('Y-m-d'),
-                            'l100' => $l100,
-                            'eurl' => $eurl,
-                        ];
-                    }
-                }
-
-                $prevFull = $e;
-            }
-
-            if (count($pairs) > 0) {
-                $avg = array_sum(array_column($pairs, 'l100')) / count($pairs);
-                $last = $pairs[count($pairs) - 1];
-
-                $stats['avg_l100'] = $avg;
-                $stats['last_l100'] = $last['l100'];
-
-                // €/100km = (€/l) * (L/100km)
-                $stats['eur_per_100'] = $last['eurl'] !== null ? ($last['eurl'] * $last['l100']) : null;
-
-                // Anomaly: >30% over average
-                $stats['anomaly_count'] = count(array_filter(
-                    $pairs,
-                    fn ($p) => $p['l100'] > $avg * 1.3
-                ));
-
-                foreach ($pairs as $p) {
-                    $chart['labels'][] = $p['date'];
-                    $chart['l100'][] = round($p['l100'], 2);
-                    $chart['eurl'][] = $p['eurl'] !== null ? round($p['eurl'], 3) : null;
-                }
-            }
-
-            // last price/l from latest entry (chronological last)
-            $lastEntry = $all->last();
-            if ($lastEntry) {
-                $stats['last_price_per_l'] = $lastEntry->price_per_liter;
-            }
+            $analytics = app(FuelAnalyticsService::class)->analyze($all);
+            $stats = $analytics['stats'];
+            $chart = $analytics['chart'];
+            $intervals = $analytics['intervals'];
+            $anomalies = $analytics['anomalies'];
+            $fuelMeta = $analytics['meta'];
         }
 
         return view('dashboard.degviela', compact(
@@ -124,7 +80,10 @@ class FuelController extends Controller
             'selectedCar',
             'entries',
             'stats',
-            'chart'
+            'chart',
+            'intervals',
+            'anomalies',
+            'fuelMeta'
         ));
     }
 
@@ -201,10 +160,13 @@ class FuelController extends Controller
             ->orderBy('odometer_km')
             ->get();
 
-        $filename = 'degviela_' . $carId . '_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'degviela_'.$carId.'_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
+
+            // UTF-8 BOM — Excel LV labāk atpazīst latviešu burtus
+            fwrite($out, "\xEF\xBB\xBF");
 
             // Header
             fputcsv($out, [

@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    
     public function up(): void
     {
         Schema::create('locations', function (Blueprint $table) {
@@ -18,7 +17,7 @@ return new class extends Migration
             $table->text('address');
             $table->text('info')->nullable();
             $table->timestamps();
-        });    
+        });
     }
 
     public function down(): void

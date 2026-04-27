@@ -1,13 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\EventController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CarController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FuelController;
 use App\Http\Controllers\MapController;
+use App\Support\EventCalendarTypes;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,12 +17,15 @@ use App\Http\Controllers\MapController;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/welcome', function () {
+    return view('welcome');
+})->name('welcome');
+
 Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-
 
 /*
 |--------------------------------------------------------------------------
@@ -31,9 +36,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard
-    Route::get('/home', function () {
-        return view('dashboard.home');
-    })->name('home');
+    Route::get('/home', [DashboardController::class, 'index'])->name('home');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -42,13 +45,14 @@ Route::middleware(['auth'])->group(function () {
     })->name('karte');
 
     Route::get('/calendar', function () {
-        return view('dashboard.calendar');
+        return view('dashboard.calendar', [
+            'eventTypes' => EventCalendarTypes::TYPES,
+        ]);
     })->name('calendar');
 
     Route::get('/profils', function () {
         return view('dashboard.profile');
     })->name('profile');
-
 
     /*
     |--------------------------------------------------------------------------
@@ -56,9 +60,10 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/admin', [AdminController::class, 'index'])->name('admin');
-    Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.deleteUser');
-
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/admin', [AdminController::class, 'index'])->name('admin');
+        Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.deleteUser');
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -68,7 +73,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/api/locations', [MapController::class, 'fetchLocations']);
 
-
     /*
     |--------------------------------------------------------------------------
     | Calendar API
@@ -77,7 +81,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/api/events', [EventController::class, 'fetchEvents']);
     Route::post('/api/events', [EventController::class, 'store']);
-
+    Route::put('/api/events/{event}', [EventController::class, 'update'])->name('api.events.update');
+    Route::delete('/api/events/{event}', [EventController::class, 'destroy'])->name('api.events.destroy');
 
     /*
     |--------------------------------------------------------------------------
@@ -91,12 +96,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/cars/{car}/share', [CarController::class, 'share'])->name('cars.share');
     Route::post('/cars/{car}/confirm', [CarController::class, 'confirmShare'])->name('cars.confirm');
+    Route::delete('/cars/{car}', [CarController::class, 'destroy'])->name('cars.destroy');
 
     // Expenses
     Route::post('/izdevumi/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('/izdevumi/expenses/{expense}/edit', [ExpenseController::class, 'edit'])->name('expenses.edit');
+    Route::put('/izdevumi/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
     Route::delete('/izdevumi/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
     Route::get('/izdevumi/export', [ExpenseController::class, 'export'])->name('expenses.export');
-
 
     /*
     |--------------------------------------------------------------------------

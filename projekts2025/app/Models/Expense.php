@@ -16,6 +16,10 @@ class Expense extends Model
         'description',
     ];
 
+    protected $casts = [
+        'date' => 'date',
+    ];
+
     public function car()
     {
         return $this->belongsTo(Car::class);
