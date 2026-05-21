@@ -4,14 +4,17 @@ namespace App\Http\Requests;
 
 use App\Models\FuelEntry;
 use Illuminate\Foundation\Http\FormRequest;
-
+//centralizē degvielas ieraksta ievades validāciju 
+// (lai noteikumi un kļūdu ziņas nebūtu izkaisītas pa kontrolieriem)
 class StoreFuelRequest extends FormRequest
 {
+    // Atļauja degvielas ieraksta saglabāšanai
     public function authorize(): bool
     {
         return true;
     }
 
+    // Validācijas noteikumi degvielas formai
     public function rules(): array
     {
         return [
@@ -21,12 +24,14 @@ class StoreFuelRequest extends FormRequest
                 'required',
                 'integer',
                 'min:0',
+                // Papildu pārbaude, lai odometrs neiet atpakaļ
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $carId = (int) $this->input('car_id');
                     if ($carId < 1) {
                         return;
                     }
 
+                    // Salīdzina ar lielāko esošo odometra vērtību šim auto
                     $max = FuelEntry::query()->where('car_id', $carId)->max('odometer_km');
                     if ($max !== null && (int) $value < (int) $max) {
                         $fail('Odometrs nevar būt mazāks par lielāko esošo vērtību šim auto (šobrīd '.$max.' km).');
@@ -42,6 +47,7 @@ class StoreFuelRequest extends FormRequest
         ];
     }
 
+    // Lietotājam saprotami kļūdu teksti
     public function messages(): array
     {
         return [

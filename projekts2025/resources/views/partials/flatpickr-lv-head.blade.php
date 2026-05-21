@@ -1,4 +1,4 @@
-{{-- Flatpickr (tāds pats kā kalendārā): CSS + tumšais kalendārs --}}
+<?php // Flatpickr CDN stili un pielāgots tumša kalendāra izskats ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" />
 <style>
     .flatpickr-calendar {

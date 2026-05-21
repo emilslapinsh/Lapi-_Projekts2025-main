@@ -5,10 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Apkopes kalendārs</title>
 
-        {{-- Tailwind stili tiek kompilēti ar Vite --}}
+        <?php // Pieslēdz projekta stilus un JS ?>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        {{-- FullCalendar bibliotēkas CSS --}}
+        <?php // FullCalendar stili kalendāram ?>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" />
 
         @include('partials.flatpickr-lv-head')
@@ -32,14 +32,14 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
-        <!-- Fona vizuālais efekts -->
+        <?php // Fona vizuālais efekts ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
         </div>
 
         <div class="relative mx-auto min-h-screen max-w-6xl px-6">
-            <!-- Galvene -->
+            <?php // Galvene ar navigāciju ?>
             <header class="flex items-center justify-between py-8">
                 <div>
                     <h1 class="text-2xl font-bold uppercase">Apkopes kalendārs</h1>
@@ -69,6 +69,7 @@
             </header>
 
             <main class="pb-12">
+                <?php // Filtrs pēc notikuma veida un poga jauna notikuma izveidei ?>
                 <section class="mt-6 rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div class="flex-1">
@@ -96,12 +97,14 @@
                     </div>
                 </section>
 
+                <?php // FullCalendar laukums ?>
                 <section class="mt-6 rounded-2xl bg-zinc-900/50 p-4 ring-1 ring-white/10 sm:p-6">
                     <div id="calendar"></div>
                 </section>
             </main>
         </div>
 
+        <?php // Logs notikuma pievienošanai un labošanai ?>
         <div
             id="eventModal"
             class="fixed inset-0 z-50 hidden"
@@ -187,6 +190,7 @@
             </div>
         </div>
 
+        <?php // Īss paziņojums augšējā stūrī (success/error) ?>
         <div
             id="toast"
             class="fixed right-4 top-4 z-[60] hidden max-w-sm rounded-xl p-4 shadow-lg ring-1 sm:right-6 sm:top-6"
@@ -200,18 +204,23 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                // JS starts pēc lapas ielādes
+                // Stils, ko izmanto datuma laukam Flatpickr 
                 var fpAltCls =
                     'mt-2 w-full rounded-xl bg-zinc-900/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/40';
 
+                // API ceļš un CSRF tokens priekš pieprasījumiem
                 const apiBase = @json(url('/api/events'));
                 const csrf = @json(csrf_token());
 
+                // Modālā loga elementi
                 const modal = document.getElementById('eventModal');
                 const modalTitle = document.getElementById('eventModalTitle');
                 const editingEventId = document.getElementById('editingEventId');
                 const deleteEventBtn = document.getElementById('deleteEventBtn');
                 const modalError = document.getElementById('modalError');
 
+                // Datuma izvēle notikuma izveidei/labošanai
                 const fpEventDate = flatpickr('#eventDate', {
                     locale: flatpickr.l10ns.lv,
                     dateFormat: 'Y-m-d',
@@ -226,16 +235,19 @@
                     altInputClass: fpAltCls,
                 });
 
+                // Paslēpj kļūdas tekstu modālajā logā
                 function hideModalError() {
                     modalError.textContent = '';
                     modalError.classList.add('hidden');
                 }
 
+                // Parāda kļūdas tekstu modālajā logā
                 function showModalError(msg) {
                     modalError.textContent = msg;
                     modalError.classList.remove('hidden');
                 }
 
+                // Parāda īsu paziņojumu (zaļš vai sarkans)
                 function showToast(text, ok) {
                     const toast = document.getElementById('toast');
                     const toastText = document.getElementById('toastText');
@@ -261,6 +273,7 @@
                     }, 3200);
                 }
 
+                // Izvelk pirmo validācijas kļūdu no JSON atbildes
                 function firstValidationMessage(data) {
                     if (!data || !data.errors) return data && data.message ? data.message : 'Kļūda saglabājot.';
                     const keys = Object.keys(data.errors);
@@ -269,6 +282,7 @@
                     return Array.isArray(arr) ? arr[0] : String(arr);
                 }
 
+                // Inicializē FullCalendar ar notikumu ielādi
                 const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
                     initialView: 'dayGridMonth',
                     locale: 'lv',
@@ -279,16 +293,19 @@
                     displayEventTime: false,
                     events: apiBase,
 
+                    // Teksts uz notikuma (title + apraksts)
                     eventDidMount: function (info) {
                         const desc = (info.event.extendedProps && info.event.extendedProps.description) || '';
                         const t = info.event.title || '';
                         info.el.title = desc ? t + ' — ' + desc : t;
                     },
 
+                    // Klikšķis uz dienas atver izveides logu
                     dateClick: function (info) {
                         openModalForCreate(info.dateStr);
                     },
 
+                    // Klikšķis uz notikuma atver labošanas logu
                     eventClick: function (info) {
                         info.jsEvent.preventDefault();
                         const ev = info.event;
@@ -302,6 +319,7 @@
 
                 calendar.render();
 
+                // Atver jauna notikuma izveidi
                 function openModalForCreate(dateStr) {
                     hideModalError();
                     editingEventId.value = '';
@@ -321,6 +339,7 @@
                         }, 0);
                 }
 
+                // Atver notikuma labošanu
                 function openModalForEdit(id, dateStr, title, description) {
                     hideModalError();
                     editingEventId.value = String(id);
@@ -344,6 +363,7 @@
                     modal.classList.remove('hidden');
                 }
 
+                // Aizver un notīra pagaidu datus
                 function closeModal() {
                     modal.classList.add('hidden');
                     fpEventDate.close();
@@ -356,6 +376,7 @@
                         });
                 }
 
+                // Poga "Pievienot notikumu"
                 document.getElementById('addEventBtn').addEventListener('click', function () {
                     openModalForCreate('');
                     setTimeout(function () {
@@ -365,10 +386,12 @@
                 document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
                 document.getElementById('eventModalBackdrop').addEventListener('click', closeModal);
 
+                // ESC aizver modāli
                 document.addEventListener('keydown', function (e) {
                     if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
                 });
 
+                // Saglabā notikumu
                 document.getElementById('saveEventBtn').addEventListener('click', async function () {
                     hideModalError();
                     const date = document.getElementById('eventDate').value;

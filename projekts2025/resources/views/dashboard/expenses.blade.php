@@ -4,17 +4,21 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Izdevumu pārvaldība</title>
+        <?php // Pieslēdz projekta stilus un JS ?>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <?php // Flatpickr stili datumu izvēlei ?>
         @include('partials.flatpickr-lv-head')
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
+        <?php // Fona gradients un gaismas efekti ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
             <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-zinc-700/10 blur-3xl"></div>
         </div>
 
+        <?php // Palīgmainīgie tabiem, filtriem un analītikas stabiņiem ?>
         @php
             $tab = $tab ?? 'izdevumi';
             $maxBar = ! empty($insights['monthly_bars']) ? max(1.0, (float) collect($insights['monthly_bars'])->max('total')) : 1.0;
@@ -23,6 +27,7 @@
         @endphp
 
         <div class="relative mx-auto min-h-screen max-w-6xl px-6">
+            <?php // Galvene ar aprakstu un navigāciju ?>
             <header class="flex flex-col gap-4 py-8 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold tracking-wide text-zinc-100 uppercase">Izdevumu pārvaldība</h1>
@@ -58,6 +63,7 @@
             </header>
 
             <main class="pb-12">
+                <?php // Paziņojums par veiksmīgu darbību ?>
                 @if (session('success'))
                     <div class="mb-6 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
                         <div class="text-sm font-semibold text-emerald-200">Veiksmīgi</div>
@@ -65,6 +71,7 @@
                     </div>
                 @endif
 
+                <?php // Paziņojums par kļūdu ?>
                 @if (session('error'))
                     <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
                         <div class="text-sm font-semibold text-red-200">Uzmanību</div>
@@ -72,6 +79,7 @@
                     </div>
                 @endif
 
+                <?php // Validācijas kļūdas ?>
                 @if ($errors->any())
                     <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
                         <div class="text-sm font-semibold text-red-200">Kļūda</div>
@@ -83,6 +91,7 @@
                     </div>
                 @endif
 
+                <?php // Gaidošie koplietošanas pieprasījumi ?>
                 @if (isset($pendingCars) && $pendingCars->count() > 0)
                     <section class="mb-6 rounded-2xl bg-amber-500/10 p-6 ring-1 ring-amber-500/25">
                         <h2 class="text-lg font-semibold text-amber-100">Koplietošanas pieprasījumi</h2>
@@ -113,6 +122,7 @@
                     </section>
                 @endif
 
+                <?php // Tabu josla (izdevumi / auto) ?>
                 <nav class="mb-6 flex gap-2 rounded-2xl bg-zinc-900/50 p-2 ring-1 ring-white/10">
                     <a
                         href="{{ route('izdevumi.index', array_merge($queryForTab, ['tab' => 'izdevumi'])) }}"
@@ -128,9 +138,10 @@
                     </a>
                 </nav>
 
-                {{-- === Izdevumi === --}}
+                <?php // Izdevumu tabs (saraksts, filtri, analītika) ?>
                 <div class="{{ $tab === 'izdevumi' ? '' : 'hidden' }} space-y-6">
                     @if ($cars->isEmpty())
+                        <?php // Ja nav pievienots neviens auto, rāda pamācību ?>
                         <section class="rounded-2xl bg-zinc-900/50 p-8 text-center ring-1 ring-white/10">
                             <p class="text-sm text-zinc-400">
                                 Vēl nav pievienots neviens auto. Sadaļā
@@ -144,6 +155,7 @@
                             </p>
                         </section>
                     @else
+                        <?php // Auto izvēle izdevumu tabā ?>
                         <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                             <h2 class="text-lg font-semibold text-zinc-100">Izvēlētais auto</h2>
                             <form
@@ -151,6 +163,7 @@
                                 action="{{ route('izdevumi.index') }}"
                                 class="mt-4 flex flex-wrap items-end gap-4"
                             >
+                                <?php // Saglabā pārējos filtrus, kad maina auto ?>
                                 <input type="hidden" name="tab" value="izdevumi" />
                                 @foreach (['type', 'period', 'date_from', 'date_to', 'sort'] as $qk)
                                     @if (request()->filled($qk))
@@ -178,6 +191,7 @@
                             </form>
                         </section>
 
+                        <?php // Kopsavilkuma kartītes (kopā, mēnesis, €/km, pēdējais nobraukums) ?>
                         <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                             <h2 class="text-lg font-semibold text-zinc-100">Kopsavilkums</h2>
                             <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -551,8 +565,14 @@
                                                 <td class="py-3 text-right whitespace-nowrap">
                                                     <div class="flex flex-wrap justify-end gap-2">
                                                         <a
-                                                            href="{{ route('expenses.edit', array_merge(['expense' => $e->id], $preserve)) }}"
-                                                            class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                                            href="#"
+                                                            class="js-edit-expense rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                                            data-expense-id="{{ $e->id }}"
+                                                            data-expense-type="{{ $e->type }}"
+                                                            data-expense-date="{{ $e->date->format('Y-m-d') }}"
+                                                            data-expense-amount="{{ $e->amount }}"
+                                                            data-expense-mileage="{{ $e->mileage ?? '' }}"
+                                                            data-expense-description="{{ $e->description ?? '' }}"
                                                         >
                                                             Labot
                                                         </a>
@@ -602,7 +622,7 @@
                     @endif
                 </div>
 
-                {{-- === Auto === --}}
+                <?php // Auto tabs (pievienošana, koplietošana, dzēšana) ?>
                 <div class="{{ $tab === 'auto' ? '' : 'hidden' }} space-y-6">
                     <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <h2 class="text-lg font-semibold text-zinc-100">Pievienot auto</h2>
@@ -768,6 +788,130 @@
             </main>
         </div>
 
+        <?php // Modālais logs izdevuma labošanai ?>
+        <div id="expenseEditModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+            <div id="expenseEditBackdrop" class="absolute inset-0 bg-black/60"></div>
+
+            <div class="relative mx-auto flex min-h-screen max-w-2xl items-center px-4 py-8 sm:px-6">
+                <div class="max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-zinc-950 p-6 ring-1 ring-white/10">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-semibold text-zinc-100">Labot izdevumu</h2>
+                            <p class="mt-1 text-sm text-zinc-400">Izmaiņas tiks saglabātas un tu atgriezīsies sarakstā</p>
+                        </div>
+                        <button
+                            type="button"
+                            id="closeExpenseEditBtn"
+                            class="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                        >
+                            Aizvērt
+                        </button>
+                    </div>
+
+                    <form id="expenseEditForm" method="POST" action="#" class="mt-6 space-y-4">
+                        @csrf
+                        @method('PUT')
+
+                        <?php // Saglabā filtrus pēc atjaunināšanas ?>
+                        @if (request()->filled('type'))
+                            <input type="hidden" name="filter_type" value="{{ request('type') }}" />
+                        @endif
+                        @foreach (['tab', 'period', 'date_from', 'date_to', 'sort'] as $k)
+                            @if (request()->filled($k))
+                                <input type="hidden" name="{{ $k }}" value="{{ request($k) }}" />
+                            @endif
+                        @endforeach
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="text-sm font-semibold text-zinc-200">Tips</label>
+                                <select
+                                    name="type"
+                                    id="edit_expense_type"
+                                    required
+                                    class="mt-2 w-full rounded-xl bg-zinc-900/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                >
+                                    @foreach ($expenseTypes as $t)
+                                        <option value="{{ $t }}">{{ $t }}</option>
+                                    @endforeach
+                                </select>
+                                <p
+                                    id="edit_expense_type_hint"
+                                    class="mt-2 min-h-[2.5rem] text-xs leading-relaxed text-zinc-500"
+                                ></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-zinc-200">Datums</label>
+                                <input
+                                    type="text"
+                                    name="date"
+                                    id="edit_expense_date"
+                                    required
+                                    autocomplete="off"
+                                    inputmode="none"
+                                    placeholder="Izvēlies datumu…"
+                                    class="js-flatpickr mt-2 w-full rounded-xl bg-zinc-900/60 px-4 py-3 text-base text-zinc-100 ring-1 ring-white/10 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="text-sm font-semibold text-zinc-200">Summa (€)</label>
+                                <input
+                                    type="number"
+                                    name="amount"
+                                    id="edit_expense_amount"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                    class="mt-2 w-full rounded-xl bg-zinc-900/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                />
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-zinc-200">Nobraukums (km)</label>
+                                <input
+                                    type="number"
+                                    name="mileage"
+                                    id="edit_expense_mileage"
+                                    min="0"
+                                    placeholder="nav obligāts"
+                                    class="mt-2 w-full rounded-xl bg-zinc-900/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-semibold text-zinc-200">Apraksts</label>
+                            <input
+                                type="text"
+                                name="description"
+                                id="edit_expense_description"
+                                maxlength="255"
+                                class="mt-2 w-full rounded-xl bg-zinc-900/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                            />
+                        </div>
+
+                        <div class="flex flex-wrap justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                id="cancelExpenseEditBtn"
+                                class="rounded-xl bg-zinc-800 px-5 py-3 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                            >
+                                Atcelt
+                            </button>
+                            <button
+                                type="submit"
+                                class="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                            >
+                                Saglabāt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <script>
             (function () {
                 const hints = @json($typeHints ?? []);
@@ -779,6 +923,81 @@
                     }
                     sel.addEventListener('change', sync);
                     sync();
+                }
+            })();
+
+            (function () {
+                // Izdevuma labošanas modālais logs
+                const modal = document.getElementById('expenseEditModal');
+                const backdrop = document.getElementById('expenseEditBackdrop');
+                const closeBtn = document.getElementById('closeExpenseEditBtn');
+                const cancelBtn = document.getElementById('cancelExpenseEditBtn');
+                const form = document.getElementById('expenseEditForm');
+
+                const typeSel = document.getElementById('edit_expense_type');
+                const typeHintEl = document.getElementById('edit_expense_type_hint');
+                const dateEl = document.getElementById('edit_expense_date');
+                const amountEl = document.getElementById('edit_expense_amount');
+                const mileageEl = document.getElementById('edit_expense_mileage');
+                const descEl = document.getElementById('edit_expense_description');
+
+                if (!modal || !form) return;
+
+                function closeModal() {
+                    modal.classList.add('hidden');
+                }
+
+                function openModalFromButton(btn) {
+                    const id = btn.getAttribute('data-expense-id') || '';
+                    const type = btn.getAttribute('data-expense-type') || '';
+                    const date = btn.getAttribute('data-expense-date') || '';
+                    const amount = btn.getAttribute('data-expense-amount') || '';
+                    const mileage = btn.getAttribute('data-expense-mileage') || '';
+                    const description = btn.getAttribute('data-expense-description') || '';
+
+                    // Iestata action uz atjaunināšanas maršrutu
+                    form.action = @json(url('/expenses/expenses')) + '/' + encodeURIComponent(id);
+
+                    // Ieliek vērtības laukos
+                    if (typeSel) typeSel.value = type;
+                    if (dateEl) dateEl.value = date;
+                    if (amountEl) amountEl.value = amount;
+                    if (mileageEl) mileageEl.value = mileage;
+                    if (descEl) descEl.value = description;
+
+                    // Atjaunina paskaidrojumu zem tipa
+                    if (typeHintEl && typeSel) {
+                        const hints = @json($typeHints ?? []);
+                        typeHintEl.textContent = hints[typeSel.value] || '';
+                    }
+
+                    modal.classList.remove('hidden');
+                }
+
+                // Klikšķis uz Labot pogas atver modāli
+                document.querySelectorAll('.js-edit-expense').forEach(function (a) {
+                    a.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        openModalFromButton(a);
+                    });
+                });
+
+                // Aizvēršanas pogas un fons
+                if (backdrop) backdrop.addEventListener('click', closeModal);
+                if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+                // ESC aizver modāli
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+                });
+
+                // Paskaidrojums zem tipa, ja lietotājs to maina
+                if (typeSel && typeHintEl) {
+                    const hints = @json($typeHints ?? []);
+                    typeSel.addEventListener('change', function () {
+                        typeHintEl.textContent = hints[typeSel.value] || '';
+                    });
                 }
             })();
 

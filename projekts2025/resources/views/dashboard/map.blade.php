@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php // Interaktīvā Leaflet karte ar klasteriem; dati tiek atlasīti pēc redzamā apgabala ?>
 <html lang="lv">
     <head>
         <meta charset="UTF-8" />
@@ -11,6 +12,7 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 
+        <?php // Kartes augstums un uznirstošo logu izskata pielāgošana panelim ?>
         <style>
             #map {
                 height: 620px;
@@ -39,6 +41,7 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
+        <?php // Fona gradients kā pārējās dashboard lapās ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -143,12 +146,14 @@
         <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
         <script>
+            // Sākšanās skats ap Latviju; zoom 7 dod platu kontekstu
             const map = L.map('map').setView([56.946, 24.105], 7);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap',
             }).addTo(map);
 
+            // Markeri grupē tuvu viens otram, lai nesajauktu karti
             const clusterGroup = L.markerClusterGroup();
             map.addLayer(clusterGroup);
 
@@ -161,10 +166,12 @@
             const filterButtons = document.querySelectorAll('.filter-btn');
             const hintEl = document.getElementById('hint');
 
+            // Pop-up un sarakstam droši rāda tukšas vērtības kā tukšu virkni
             function safeText(value) {
                 return (value ?? '').toString();
             }
 
+            // API tips -> īss latvisks paraksts saskarnē
             function typeLabel(type) {
                 if (type === 'gas_station') return 'uzpildes stacija';
                 if (type === 'service_center') return 'autoserviss';
@@ -172,6 +179,7 @@
                 return (type ?? '').replace('_', ' ');
             }
 
+            // Aplīša krāsa pēc lokācijas veida
             function markerColor(type) {
                 if (type === 'gas_station') return '#ef4444';
                 if (type === 'service_center') return '#22c55e';
@@ -179,6 +187,7 @@
                 return '#3b82f6';
             }
 
+            // Backend sagaida south,west,north,east ar fiksētu precizitāti
             function bboxString() {
                 const b = map.getBounds();
                 return [
@@ -189,6 +198,7 @@
                 ].join(',');
             }
 
+            // Dinamisks padoms atkarībā no tā vai API vispār būs lokācijas
             function updateHint() {
                 const zoom = map.getZoom();
                 if (zoom < 10) {
@@ -200,6 +210,7 @@
                 }
             }
 
+            // Labās kolonnas sarakstu pēc aktivā filtra un meklēšanas
             function renderList() {
                 listEl.innerHTML = '';
 
@@ -220,6 +231,7 @@
                     return;
                 }
 
+                // Klikšķis uz rindas centrē karti pie marķiera
                 filtered.forEach(({ marker, name, type, address }) => {
                     const item = document.createElement('button');
                     item.type = 'button';
@@ -264,11 +276,13 @@
             let fetchTimer = null;
             let activeFetch = null;
             let fetchSeq = 0;
+            // Neierosina API katru pikseļa pārvietojumu — īss debounce
             function scheduleFetch() {
                 if (fetchTimer) clearTimeout(fetchTimer);
                 fetchTimer = setTimeout(fetchLocations, 350);
             }
 
+            // Backend ierobežo smago pieprasījumu skaitu zem zema zoom
             function shouldFetchAtZoom(type, zoom) {
                 if (type === 'ev_charging') return zoom >= 11;
                 if (type === 'gas_station') return zoom >= 10;
@@ -277,6 +291,7 @@
                 return zoom >= 10;
             }
 
+            // Ielādē lokācijas json pēc bbox + zoom + tips; atceļ iepriekšējo pieprasījumu
             async function fetchLocations() {
                 const zoom = map.getZoom();
                 if (!shouldFetchAtZoom(currentFilter, zoom)) {
@@ -307,6 +322,7 @@
                     }
                     const locations = await res.json();
 
+                    // Ja paralēli sūtīts jaunāks pieprasījums, šo atbildi neņem vērā
                     if (mySeq !== fetchSeq) {
                         return;
                     }
@@ -321,6 +337,7 @@
 
                         const color = markerColor(location.type);
 
+                        // Aplītis labāk salīdzinās ar klasteru plugin nekā ikona
                         const marker = L.circleMarker([lat, lon], {
                             radius: 8,
                             color: color,
@@ -367,6 +384,7 @@
                     renderList();
                     updateHint();
                 } catch (err) {
+                    // Aborts ir paredzēts — klusējam
                     if (err && err.name === 'AbortError') {
                         return;
                     }
@@ -374,6 +392,7 @@
                 }
             }
 
+            // Filtra poga maina tipu un atkal ielādē punktus
             filterButtons.forEach((btn) => {
                 btn.addEventListener('click', () => {
                     filterButtons.forEach((b) => {
@@ -391,6 +410,7 @@
                 });
             });
 
+            // Meklēšana filtrē tikai jau ielādētos punktus lokāli
             searchInput.addEventListener('input', (e) => {
                 searchQuery = e.target.value.toLowerCase();
                 renderList();
@@ -399,6 +419,7 @@
             map.on('moveend', scheduleFetch);
             map.on('zoomend', scheduleFetch);
 
+            // Sākotnējais ielādes mēģinājums pēc skata
             fetchLocations();
         </script>
     </body>

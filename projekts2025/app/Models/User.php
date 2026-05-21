@@ -2,36 +2,31 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+// Lietotāja modelis
+// Glabā autentifikācijas datus un attiecības ar auto un notikumiem, kā arī admin pārbaudi
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    // Lietotāja modelis autentifikācijai
     use HasFactory, Notifiable;
 
-    /**
-     * @var list<string>
-     */
+    // Aizpildāmie lauki
     protected $fillable = [
         'username',
         'email',
         'password',
     ];
 
-    /**
-     * @var list<string>
-     */
+    // Lauki, kurus nesūta atpakaļ JSON atbildēs
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    // Lauku tipi un pārvēršanas
     protected function casts(): array
     {
         return [
@@ -40,23 +35,28 @@ class User extends Authenticatable
         ];
     }
 
+    // Lietotāja kalendāra notikumi
     public function events()
     {
         return $this->hasMany(Event::class);
     }
 
+    // Lietotāja auto (koplietošana caur car_user)
     public function cars()
     {
         return $this->belongsToMany(\App\Models\Car::class)->withPivot('confirmed')->withTimestamps();
     }
 
+    // Pārbauda vai lietotājs ir administrators
     public function isAdmin(): bool
     {
+        // Adminu saraksts tiek glabāts config/admin.php
         $usernames = config('admin.usernames', []);
         if (! is_array($usernames) || count($usernames) === 0) {
             return false;
         }
 
+        // Salīdzina pēc lietotājvārda (mazie burti)
         $mine = strtolower((string) $this->username);
         foreach ($usernames as $u) {
             if ($mine === strtolower((string) $u)) {

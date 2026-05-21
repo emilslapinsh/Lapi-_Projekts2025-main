@@ -9,6 +9,7 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
+        <?php // Fona gradients un gaismas efekti ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -16,6 +17,7 @@
         </div>
 
         <div class="relative mx-auto min-h-screen max-w-6xl px-6">
+            <?php // Galvene ar pogām uz paneli un izrakstīšanos ?>
             <header class="flex flex-col gap-4 py-8 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold tracking-wide text-zinc-100 uppercase">Degvielas patēriņš</h1>
@@ -48,6 +50,7 @@
             </header>
 
             <main class="pb-12">
+                <?php // Paziņojums par veiksmīgu darbību ?>
                 @if (session('success'))
                     <div class="mb-6 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
                         <div class="text-sm font-semibold text-emerald-200">Veiksmīgi</div>
@@ -55,6 +58,7 @@
                     </div>
                 @endif
 
+                <?php // Validācijas kļūdas ?>
                 @if ($errors->any())
                     <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
                         <div class="text-sm font-semibold text-red-200">Kļūda</div>
@@ -66,6 +70,7 @@
                     </div>
                 @endif
 
+                <?php // Brīdinājums par gaidošām auto saitēm ?>
                 @if ($pendingCars->isNotEmpty())
                     <div class="mb-6 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-500/25">
                         <div class="text-sm font-semibold text-amber-100">Gaida apstiprinājumu</div>
@@ -78,6 +83,7 @@
                     </div>
                 @endif
 
+                <?php // Auto izvēle un galvenie rādītāji ?>
                 <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div class="min-w-0 flex-1 lg:max-w-sm">
@@ -109,6 +115,7 @@
                         </div>
 
                         @if ($selectedCar)
+                            <?php // Kopsavilkuma kartītes (vidēji, pēdējais, €/100km, cena, brīdinājumi) ?>
                             <div class="grid min-w-0 flex-1 grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
                                 <div
                                     class="rounded-2xl bg-zinc-950/50 p-4 ring-1 ring-white/10"
@@ -165,6 +172,7 @@
                     </div>
 
                     @if ($selectedCar)
+                        <?php // Eksports uz CSV ?>
                         <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                             <a
                                 href="{{ route('degviela.export', ['car_id' => $selectedCar->id]) }}"
@@ -178,6 +186,7 @@
                         </div>
 
                         @if (($fuelMeta['intervals_usable'] ?? 0) === 0)
+                            <?php // Paskaidrojums, kāpēc nav pietiekami datu patēriņa aprēķinam ?>
                             <div class="mt-5 rounded-2xl bg-zinc-950/60 p-4 ring-1 ring-white/10">
                                 <div class="text-sm font-semibold text-zinc-100">Kāpēc nav patēriņa skaitļu?</div>
                                 <p class="mt-2 text-sm leading-relaxed text-zinc-400">
@@ -197,6 +206,7 @@
                         @endif
 
                         @if (! empty($anomalies))
+                            <?php // Saraksts ar anomālijām (augstāks patēriņš nekā parasti) ?>
                             <div class="mt-5 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4">
                                 <div class="text-sm font-semibold text-amber-100">Augstāks patēriņš nekā parasti</div>
                                 <p class="mt-1 text-xs text-amber-100/70">
@@ -426,11 +436,13 @@
 
                             <script>
                                 (function () {
+                                    // Iegūst ievades laukus priekš €/l priekšskatījuma
                                     const liters = document.getElementById('fuel_liters');
                                     const total = document.getElementById('fuel_total_eur');
                                     const out = document.getElementById('fuel_price_preview');
                                     if (!liters || !total || !out) return;
 
+                                    // Aprēķina un parāda cenu par litru (summa ÷ litri)
                                     function fmt() {
                                         const l = parseFloat(String(liters.value).replace(',', '.'));
                                         const e = parseFloat(String(total.value).replace(',', '.'));
@@ -441,8 +453,10 @@
                                         out.textContent = (e / l).toFixed(3).replace('.', ',') + ' €/l';
                                     }
 
+                                    // Pārrēķina, kad lietotājs maina litrus vai summu
                                     liters.addEventListener('input', fmt);
                                     total.addEventListener('input', fmt);
+                                    // Pirmais aprēķins uzreiz pēc lapas ielādes
                                     fmt();
                                 })();
                             </script>
@@ -614,21 +628,26 @@
         @if (! empty($chart['labels']))
             <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
             <script>
+                // Dati grafikam (datumi, patēriņš, cena)
                 const labels = @json($chart['labels']);
                 const l100 = @json($chart['l100']);
                 const eurl = @json($chart['eurl']);
 
+                // Krāsas un līniju režģis tumšajam fonam
                 const tickColor = '#a1a1aa';
                 const gridColor = 'rgba(255,255,255,0.06)';
 
+                // Uzzīmē grafiku uz canvas elementa
                 const ctx = document.getElementById('fuelChart');
                 if (ctx && typeof Chart !== 'undefined') {
+                    // Chart.js konfigurācija (2 līnijas ar 2 asīm)
                     new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels,
                             datasets: [
                                 {
+                                    // L/100 km līnija (kreisa ass)
                                     label: 'L/100 km',
                                     data: l100,
                                     yAxisID: 'y',
@@ -640,6 +659,7 @@
                                     pointHoverRadius: 5,
                                 },
                                 {
+                                    // €/l līnija (labā ass)
                                     label: '€/l',
                                     data: eurl,
                                     yAxisID: 'y1',
@@ -653,10 +673,12 @@
                             ],
                         },
                         options: {
+                            // Pamatuzstādījumi (responsīvs grafiks un ērtāka tooltip mijiedarbība)
                             responsive: true,
                             maintainAspectRatio: false,
                             interaction: { mode: 'index', intersect: false },
                             plugins: {
+                                // Leģenda un tooltip noformējums
                                 legend: {
                                     labels: { color: tickColor, font: { size: 12 } },
                                 },
@@ -669,16 +691,19 @@
                                 },
                             },
                             scales: {
+                                // X ass (datumi)
                                 x: {
                                     ticks: { color: tickColor, maxRotation: 45, minRotation: 0 },
                                     grid: { color: gridColor },
                                 },
+                                // Y ass (patēriņš)
                                 y: {
                                     position: 'left',
                                     title: { display: true, text: 'L/100 km', color: tickColor },
                                     ticks: { color: tickColor },
                                     grid: { color: gridColor },
                                 },
+                                // Y1 ass (cena)
                                 y1: {
                                     position: 'right',
                                     title: { display: true, text: '€/l', color: tickColor },

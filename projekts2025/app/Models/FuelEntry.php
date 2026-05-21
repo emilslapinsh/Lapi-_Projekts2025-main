@@ -4,8 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// Degvielas uzpildes ieraksta modelis
+// Glabā uzpildes datus, pieder auto un lietotājam, nodrošina vienkāršu cenu aprēķinu
 class FuelEntry extends Model
 {
+    // Masveida aizpildāmie lauki
     protected $fillable = [
         'car_id',
         'user_id',
@@ -19,6 +22,7 @@ class FuelEntry extends Model
         'note',
     ];
 
+    // Lauku tipi un automātiskās pārvēršanas
     protected $casts = [
         'date' => 'date',
         'is_full_tank' => 'boolean',
@@ -26,23 +30,28 @@ class FuelEntry extends Model
         'total_eur' => 'decimal:2',
     ];
 
+    // Saite uz auto, kuram pieder uzpilde
     public function car()
     {
         return $this->belongsTo(Car::class);
     }
 
+    // Saite uz lietotāju, kurš pievienoja uzpildi
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    // Aprēķina cenu par litru no kopējās summas un litriem
     public function getPricePerLiterAttribute(): ?float
     {
+        // Ja litri ir 0, dalīšanu neveic
         $liters = (float) $this->liters;
         if ($liters <= 0) {
             return null;
         }
 
+        // total_eur / liters
         return (float) $this->total_eur / $liters;
     }
 }

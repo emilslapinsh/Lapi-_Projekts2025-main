@@ -5,12 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Sākums — Automašīnas apkopes un izdevumu sekošana</title>
 
-        {{-- Tailwind via Vite --}}
+        <?php // Pieslēdz projekta stilus un JS ?>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
-        <!-- Fona “glow” efekts -->
+        <?php // Fona “glow” efekts ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -18,9 +18,9 @@
         </div>
 
         <div class="relative mx-auto min-h-screen max-w-6xl px-6">
-            <!-- Top bar -->
+            <?php // Augšējā josla ar sveicienu un pogām ?>
             <header class="flex items-center justify-between py-8">
-                <!-- Left side -->
+                <?php // Kreisa puse: virsraksts un brīdinājums (ja ir steidzami notikumi) ?>
                 <div class="flex items-start justify-between gap-3">
                     <h1 class="text-2xl font-bold tracking-wide text-zinc-100 uppercase">
                         Auto apkopes un izdevumu palīgrīks
@@ -42,7 +42,7 @@
                     @endif
                 </div>
 
-                <!-- Right side -->
+                <?php // Labā puse: profils, admin, izrakstīšanās ?>
                 <div class="flex items-center gap-4">
                     <div class="hidden sm:block text-right">
                         <div class="flex items-center justify-end gap-2">
@@ -66,7 +66,7 @@
                         <div class="text-sm text-zinc-400">Pārskats</div>
                     </div>
 
-                    <!-- PROFILS BUTTON -->
+                    <?php // Profila poga ?>
                     <a
                         href="{{ route('profile') }}"
                         class="rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
@@ -95,7 +95,7 @@
                 </div>
             </header>
 
-            <!-- Main -->
+            <?php // Galvenais saturs ?>
             <main class="pb-12">
                 @if (($urgentUpcomingCount ?? 0) > 0)
                     <section class="mb-6 rounded-2xl bg-red-500/10 p-5 ring-1 ring-red-500/25">
@@ -122,7 +122,7 @@
                     </section>
                 @endif
 
-                <!-- Hero -->
+                <?php // Īss ievads ar ātrajiem linkiem ?>
                 <section class="rounded-2xl bg-zinc-900/50 p-8 ring-1 ring-white/10">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -149,7 +149,7 @@
                     </div>
                 </section>
 
-                <!-- Cards -->
+                <?php // Galvenās sadaļas kā kartītes ?>
                 <section class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <a
                         href="{{ url('/karte') }}"
@@ -195,7 +195,7 @@
                         <p class="mt-3 text-base text-zinc-400">Plānot apkopes un sekot termiņiem.</p>
                     </a>
                 </section>
-                <!-- Dashboard summary -->
+                <?php // Kopsavilkuma rādītāji (skaits, izdevumi, patēriņš, nākamais notikums) ?>
                 <section class="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
                     <div class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <div class="text-sm font-medium text-zinc-400">Auto skaits</div>
@@ -230,7 +230,7 @@
                     </div>
                 </section>
 
-                <!-- Upcoming + activity -->
+                <?php // Tuvākie notikumi un pēdējās aktivitātes ?>
                 <section class="mt-8 grid gap-6 lg:grid-cols-2">
                     <div class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <div class="flex items-center justify-between">
@@ -305,7 +305,7 @@
                     </div>
                 </section>
 
-                <!-- Quick actions -->
+                <?php // Ātrās darbības ?>
                 <section class="mt-8 rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>

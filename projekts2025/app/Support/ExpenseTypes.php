@@ -2,11 +2,11 @@
 
 namespace App\Support;
 
-/**
- * Izdevumu veidi izdevumu sadaļā (bez degvielas — tā ir atsevišķa lapa).
- */
+// Izdevumu tipu saraksts
+// Izmanto validācijā un kā formas palīgtekstiem
 final class ExpenseTypes
 {
+    // Atļautie izdevumu tipi (degviela ir atsevišķā sadaļā)
     public const TYPES = [
         'Serviss',
         'Remonts',
@@ -15,14 +15,13 @@ final class ExpenseTypes
         'Cits',
     ];
 
+    // Apvieno tipus vienā teksta virknē validācijas noteikumiem
     public static function ruleIn(): string
     {
         return implode(',', self::TYPES);
     }
 
-    /**
-     * @return array<string, string>
-     */
+    // Īsi paskaidrojumi formām pēc izvēlētā tipa
     public static function formHints(): array
     {
         return [

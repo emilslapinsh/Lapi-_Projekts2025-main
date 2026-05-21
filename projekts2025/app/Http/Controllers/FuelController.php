@@ -9,25 +9,32 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+// Degvielas sadaļas darbības
+// Parāda uzpildes un analītiku, saglabā un dzēš ierakstus, eksportē CSV
 class FuelController extends Controller
 {
+    // Degvielas lapa ar uzpildēm un analītiku
     public function index(Request $request)
     {
+        // Pašreizējais lietotājs
         $user = Auth::user();
 
-        // Apstiprinātie auto + gaidošās saites (pending) — kā izdevumu sadaļā
+        // Apstiprinātie auto, kuriem lietotājam ir pieeja
         $cars = $user->cars()
             ->wherePivot('confirmed', true)
             ->orderBy('brand')
             ->get();
 
+        // Gaidošie koplietošanas pieprasījumi
         $pendingCars = $user->cars()
             ->wherePivot('confirmed', false)
             ->get();
 
+        // Noklusētās vērtības, ja nav izvēlēts auto
         $selectedCar = null;
         $entries = collect();
 
+        // Kopsavilkuma rādītāji degvielai
         $stats = [
             'avg_l100' => null,
             'last_l100' => null,
@@ -36,12 +43,14 @@ class FuelController extends Controller
             'anomaly_count' => 0,
         ];
 
+        // Diagrammas dati
         $chart = [
             'labels' => [],
             'l100' => [],
             'eurl' => [],
         ];
 
+        // Intervāli un anomālijas pilnas bākas metodei
         $intervals = [];
         $anomalies = [];
         $fuelMeta = [
@@ -49,10 +58,13 @@ class FuelController extends Controller
             'intervals_usable' => 0,
         ];
 
+        // Ja ir auto, ielasa ierakstus izvēlētajam auto
         if ($cars->isNotEmpty()) {
+            // Izvēlas auto pēc car_id vai paņem pirmo sarakstā
             $carId = (int) ($request->query('car_id') ?? $cars->first()->id);
             $selectedCar = $cars->firstWhere('id', $carId) ?? $cars->first();
 
+            // Pēdējie 50 ieraksti tabulai
             $entries = FuelEntry::query()
                 ->where('car_id', $selectedCar->id)
                 ->orderByDesc('date')
@@ -60,12 +72,14 @@ class FuelController extends Controller
                 ->limit(50)
                 ->get();
 
+            // Visi ieraksti analītikai (pilnas bākas intervāli)
             $all = FuelEntry::query()
                 ->where('car_id', $selectedCar->id)
                 ->orderBy('date')
                 ->orderBy('odometer_km')
                 ->get();
 
+            // Aprēķina patēriņu, izmaksas un anomālijas
             $analytics = app(FuelAnalyticsService::class)->analyze($all);
             $stats = $analytics['stats'];
             $chart = $analytics['chart'];
@@ -74,7 +88,8 @@ class FuelController extends Controller
             $fuelMeta = $analytics['meta'];
         }
 
-        return view('dashboard.degviela', compact(
+        // Atgriež skatu ar sagatavotajiem datiem
+        return view('dashboard.fuel', compact(
             'cars',
             'pendingCars',
             'selectedCar',
@@ -87,19 +102,23 @@ class FuelController extends Controller
         ));
     }
 
+    // Saglabā jaunu uzpildes ierakstu
     public function store(StoreFuelRequest $request)
     {
+        // Pašreizējais lietotājs un izvēlētais auto
         $user = Auth::user();
         $carId = (int) $request->input('car_id');
 
-        // ✅ Security: user must have confirmed access to this car (pivot confirmed=true)
+        // Pārbauda, vai lietotājam ir apstiprināta pieeja auto
         $hasAccess = $user->cars()
             ->wherePivot('confirmed', true)
             ->where('cars.id', $carId)
             ->exists();
 
+        // Bloķē, ja auto nav pieejams lietotājam
         abort_unless($hasAccess, 403);
 
+        // Izveido uzpildes ierakstu
         FuelEntry::create([
             'car_id' => $carId,
             'user_id' => $user->id,
@@ -113,62 +132,74 @@ class FuelController extends Controller
             'note' => $request->input('note'),
         ]);
 
+        // Novirza atpakaļ uz degvielas lapu
         return redirect()
             ->route('degviela.index', ['car_id' => $carId])
             ->with('success', 'Uzpildes ieraksts pievienots.');
     }
 
+    // Dzēš uzpildes ierakstu
     public function destroy(FuelEntry $fuel)
     {
+        // Pašreizējais lietotājs
         $user = Auth::user();
 
-        // ✅ Security: must have confirmed access to the car
+        // Pārbauda, vai lietotājam ir apstiprināta pieeja auto
         $hasAccess = $user->cars()
             ->wherePivot('confirmed', true)
             ->where('cars.id', $fuel->car_id)
             ->exists();
 
+        // Bloķē, ja auto nav pieejams lietotājam
         abort_unless($hasAccess, 403);
 
-        // ✅ Strict mode: only creator can delete (change if you want team-delete)
+        // Dzēst drīkst tikai tas, kurš izveidoja ierakstu
         abort_unless($fuel->user_id === $user->id, 403);
 
+        // Dzēš ierakstu un atceras auto ID
         $carId = $fuel->car_id;
         $fuel->delete();
 
+        // Novirza atpakaļ uz degvielas lapu
         return redirect()
             ->route('degviela.index', ['car_id' => $carId])
             ->with('success', 'Uzpildes ieraksts dzēsts.');
     }
 
+    // Eksportē uzpildes CSV failā
     public function export(Request $request): StreamedResponse
     {
+        // Pašreizējais lietotājs un izvēlētais auto
         $user = Auth::user();
         $carId = (int) $request->query('car_id');
 
-        // ✅ Security: confirmed access required
+        // Pārbauda, vai lietotājam ir apstiprināta pieeja auto
         $hasAccess = $user->cars()
             ->wherePivot('confirmed', true)
             ->where('cars.id', $carId)
             ->exists();
 
+        // Bloķē, ja auto nav pieejams lietotājam
         abort_unless($hasAccess, 403);
 
+        // Ielasa rindas eksportam
         $rows = FuelEntry::query()
             ->where('car_id', $carId)
             ->orderBy('date')
             ->orderBy('odometer_km')
             ->get();
 
+        // Sagatavo faila nosaukumu
         $filename = 'degviela_'.$carId.'_'.now()->format('Ymd_His').'.csv';
 
+        // Izvada CSV straumē
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
 
-            // UTF-8 BOM — Excel LV labāk atpazīst latviešu burtus
+            // UTF-8 BOM, lai Excel pareizi lasa latviešu burtus
             fwrite($out, "\xEF\xBB\xBF");
 
-            // Header
+            // Kolonnu virsraksti
             fputcsv($out, [
                 'Datums',
                 'Odometrs_km',
@@ -181,7 +212,9 @@ class FuelController extends Controller
                 'Piezime',
             ]);
 
+            // Datu rindas
             foreach ($rows as $r) {
+                // EUR par litru tiek rēķināts modelī no total_eur un liters
                 fputcsv($out, [
                     $r->date?->format('Y-m-d'),
                     $r->odometer_km,

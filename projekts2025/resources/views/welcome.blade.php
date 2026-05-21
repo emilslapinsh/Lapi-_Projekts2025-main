@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php // Sākumlapa — īss apraksts iespējām un saites uz pieslēgšanos vai paneli ?>
 <html lang="lv">
     <head>
         <meta charset="UTF-8" />
@@ -8,6 +9,7 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
+        <?php // Fons un „glow” slānis virs pamatkrāsas ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -62,6 +64,7 @@
             </header>
 
             <main class="pb-12">
+                <?php // Trīs kolonnu funkciju kopsavilkums ?>
                 <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                     <div class="grid gap-6 lg:grid-cols-3">
                         <div class="rounded-xl bg-zinc-950/40 p-5 ring-1 ring-white/5">
@@ -89,6 +92,7 @@
                     </div>
                 </section>
 
+                <?php // Kā sākt un ieguvumi divās kolonnās ?>
                 <section class="mt-6 grid gap-6 lg:grid-cols-2">
                     <div class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <h2 class="text-lg font-semibold text-zinc-100">Kā sākt</h2>

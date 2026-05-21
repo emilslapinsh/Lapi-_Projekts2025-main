@@ -9,6 +9,7 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
+        <?php // Fons un gaismas efekti ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -16,6 +17,7 @@
         </div>
 
         <div class="relative mx-auto min-h-screen max-w-6xl px-6">
+            <?php // Galvene ar navigāciju ?>
             <header class="flex flex-col gap-4 py-8 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold tracking-wide uppercase">Administrācija</h1>
@@ -43,6 +45,7 @@
             </header>
 
             <main class="pb-12">
+                <?php // Paziņojums par veiksmīgu darbību ?>
                 @if (session('success'))
                     <div class="mb-6 rounded-2xl bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
                         <div class="text-sm font-semibold text-emerald-200">Veiksmīgi</div>
@@ -50,6 +53,7 @@
                     </div>
                 @endif
 
+                <?php // Paziņojums par kļūdu ?>
                 @if (session('error'))
                     <div class="mb-6 rounded-2xl bg-red-500/10 p-4 ring-1 ring-red-500/20">
                         <div class="text-sm font-semibold text-red-200">Neizdevās</div>
@@ -57,6 +61,7 @@
                     </div>
                 @endif
 
+                <?php // Statistika ?>
                 <section class="grid gap-4 sm:grid-cols-2">
                     <div class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <div class="text-sm font-medium text-zinc-400">Lietotāji kopā</div>
@@ -69,6 +74,7 @@
                     </div>
                 </section>
 
+                <?php // Filtri: meklēšana un kārtošana ?>
                 <section class="mt-8 rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                     <form method="GET" action="{{ route('admin') }}" class="grid gap-4 lg:grid-cols-3">
                         <div class="lg:col-span-2">
@@ -129,6 +135,7 @@
                     </form>
                 </section>
 
+                <?php // Lietotāju tabula ?>
                 <section class="mt-8 overflow-hidden rounded-2xl bg-zinc-900/50 ring-1 ring-white/10">
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[860px] text-sm">
@@ -169,6 +176,7 @@
                                             {{ $user->created_at?->format('Y-m-d H:i') }}
                                         </td>
                                         <td class="px-5 py-4 text-right">
+                                            <?php // Dzēšanas poga ar apstiprinājumu ?>
                                             <form
                                                 method="POST"
                                                 action="{{ route('admin.deleteUser', $user->id) }}"
@@ -200,6 +208,7 @@
         </div>
 
         <script>
+            // Vienkāršs apstiprinājums pirms dzēšanas
             function apstiprinatDzesanu() {
                 return confirm('Vai tiešām vēlies dzēst šo lietotāju? Šo darbību nevar atsaukt.');
             }
