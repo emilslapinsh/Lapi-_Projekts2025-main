@@ -26,7 +26,7 @@
                         <span class="text-zinc-200">L/100 km</span>
                         tiek aprēķināts tikai starp divām pēc kārtas
                         <span class="text-zinc-200">pilnām bākām</span>
-                        — tā ir standarta metode, lai litri atbilstu nobrauktajiem kilometriem.
+                        - tā ir standarta metode, lai litri atbilstu nobrauktajiem kilometriem.
                     </p>
                 </div>
 
@@ -124,7 +124,7 @@
                                     <div class="text-xs font-medium text-zinc-500">Vidēji</div>
                                     <div class="mt-0.5 text-[11px] leading-tight text-zinc-500">L/100 km</div>
                                     <div class="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
-                                        {{ $stats['avg_l100'] !== null ? number_format($stats['avg_l100'], 2) : '—' }}
+                                        {{ $stats['avg_l100'] !== null ? number_format($stats['avg_l100'], 2) : '-' }}
                                     </div>
                                 </div>
                                 <div
@@ -134,7 +134,7 @@
                                     <div class="text-xs font-medium text-zinc-500">Pēdējais</div>
                                     <div class="mt-0.5 text-[11px] leading-tight text-zinc-500">L/100 km</div>
                                     <div class="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
-                                        {{ $stats['last_l100'] !== null ? number_format($stats['last_l100'], 2) : '—' }}
+                                        {{ $stats['last_l100'] !== null ? number_format($stats['last_l100'], 2) : '-' }}
                                     </div>
                                 </div>
                                 <div
@@ -144,7 +144,7 @@
                                     <div class="text-xs font-medium text-zinc-500">Izdevumi</div>
                                     <div class="mt-0.5 text-[11px] leading-tight text-zinc-500">€/100 km</div>
                                     <div class="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
-                                        {{ $stats['eur_per_100'] !== null ? number_format($stats['eur_per_100'], 2) : '—' }}
+                                        {{ $stats['eur_per_100'] !== null ? number_format($stats['eur_per_100'], 2) : '-' }}
                                     </div>
                                 </div>
                                 <div
@@ -154,7 +154,7 @@
                                     <div class="text-xs font-medium text-zinc-500">Cena</div>
                                     <div class="mt-0.5 text-[11px] leading-tight text-zinc-500">€/l (pēdējā)</div>
                                     <div class="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
-                                        {{ $stats['last_price_per_l'] !== null ? number_format($stats['last_price_per_l'], 3) : '—' }}
+                                        {{ $stats['last_price_per_l'] !== null ? number_format($stats['last_price_per_l'], 3) : '-' }}
                                     </div>
                                 </div>
                                 <div
@@ -210,7 +210,7 @@
                             <div class="mt-5 rounded-2xl border border-amber-500/25 bg-amber-500/5 p-4">
                                 <div class="text-sm font-semibold text-amber-100">Augstāks patēriņš nekā parasti</div>
                                 <p class="mt-1 text-xs text-amber-100/70">
-                                    Šie intervāli pārsniedz vidējo par vairāk nekā 30% — pārbaudi odometru, „pilna bāka”
+                                    Šie intervāli pārsniedz vidējo par vairāk nekā 30% - pārbaudi odometru, „pilna bāka”
                                     atzīmi vai īpašus apstākļus (pilsēta, aukstums, piekabe).
                                 </p>
                                 <ul class="mt-3 space-y-2 text-sm text-amber-50/90">
@@ -259,7 +259,7 @@
                                 <span class="font-mono text-zinc-300">
                                     L/100 km = (otrajā uzpildē iepildītie litri ÷ nobraukums) × 100
                                 </span>
-                                — tieši tās otrās uzpildes litri, kas „aizpilda bāku” pēc nobraukuma.
+                                - tieši tās otrās uzpildes litri, kas „aizpilda bāku” pēc nobraukuma.
                             </li>
                             <li>
                                 „Pēdējā cena €/l” ir no
@@ -274,7 +274,7 @@
                     <section class="rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <h2 class="text-lg font-semibold text-zinc-100">Pievienot uzpildi</h2>
                         <p class="mt-1 text-sm text-zinc-400">
-                            Odometrs vienmēr augošā secībā — sistēma nepieļauj mazāku vērtību nekā iepriekšēji
+                            Odometrs vienmēr augošā secībā - sistēma nepieļauj mazāku vērtību nekā iepriekšēji
                             ierakstīts maksimums.
                         </p>
 
@@ -352,7 +352,7 @@
                                 <div class="rounded-xl bg-zinc-950/50 px-4 py-3 text-sm ring-1 ring-white/10">
                                     <span class="text-zinc-500">Aprēķins:</span>
                                     <span id="fuel_price_preview" class="ml-1 font-semibold tabular-nums text-zinc-200">
-                                        — €/l
+                                        - €/l
                                     </span>
                                     <span class="mt-1 block text-xs text-zinc-500">
                                         Summa ÷ litri (pirms saglabāšanas, lai noķertu kļūdas).
@@ -447,7 +447,7 @@
                                         const l = parseFloat(String(liters.value).replace(',', '.'));
                                         const e = parseFloat(String(total.value).replace(',', '.'));
                                         if (!(l > 0) || !(e >= 0)) {
-                                            out.textContent = '— €/l';
+                                            out.textContent = '- €/l';
                                             return;
                                         }
                                         out.textContent = (e / l).toFixed(3).replace('.', ',') + ' €/l';
@@ -494,7 +494,7 @@
                     <section class="mt-6 rounded-2xl bg-zinc-900/50 p-6 ring-1 ring-white/10">
                         <h2 class="text-lg font-semibold text-zinc-100">Intervālu tabula</h2>
                         <p class="mt-1 text-sm text-zinc-400">
-                            Tie paši dati kā grafikā — pārskatāmi tabulā (jaunākie augšā).
+                            Tie paši dati kā grafikā - pārskatāmi tabulā (jaunākie augšā).
                         </p>
                         <div class="mt-4 overflow-x-auto">
                             <table class="w-full min-w-[640px] text-sm">
@@ -527,7 +527,7 @@
                                                 {{ number_format($inv['l100'], 2) }} L/100km
                                             </td>
                                             <td class="py-3 whitespace-nowrap tabular-nums text-zinc-400">
-                                                {{ $inv['eurl'] !== null ? number_format($inv['eurl'], 3) : '—' }}
+                                                {{ $inv['eurl'] !== null ? number_format($inv['eurl'], 3) : '-' }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -570,7 +570,7 @@
                                             {{ number_format($e->total_eur, 2) }} €
                                         </td>
                                         <td class="py-3 whitespace-nowrap tabular-nums">
-                                            {{ $e->price_per_liter !== null ? number_format($e->price_per_liter, 3) : '—' }}
+                                            {{ $e->price_per_liter !== null ? number_format($e->price_per_liter, 3) : '-' }}
                                         </td>
                                         <td class="py-3 whitespace-nowrap">{{ $e->fuel_type }}</td>
                                         <td class="py-3 whitespace-nowrap">
@@ -592,7 +592,7 @@
                                             class="py-3 max-w-[140px] truncate text-zinc-400"
                                             title="{{ $e->station }}"
                                         >
-                                            {{ $e->station ?? '—' }}
+                                            {{ $e->station ?? '-' }}
                                         </td>
                                         <td class="py-3 text-right whitespace-nowrap">
                                             <form

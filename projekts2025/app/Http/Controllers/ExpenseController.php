@@ -170,7 +170,7 @@ class ExpenseController extends Controller
                     $e->amount,
                     $e->mileage ?? '',
                     $e->description ?? '',
-                    optional($e->user)->username ?? '—',
+                    optional($e->user)->username ?? '-',
                 ]);
             }
 

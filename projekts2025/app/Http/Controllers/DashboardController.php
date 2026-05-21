@@ -214,7 +214,7 @@ class DashboardController extends Controller
                     'ts' => $e->created_at ?? now(),
                     'title' => 'Izdevums: '.$e->type,
                     // Noformē summu ar 2 zīmēm aiz komata
-                    'subtitle' => $carLabel.' — '.number_format((float) $e->amount, 2).' €',
+                    'subtitle' => $carLabel.' - '.number_format((float) $e->amount, 2).' €',
                 ]);
             }
 
@@ -233,7 +233,7 @@ class DashboardController extends Controller
                     'ts' => $f->created_at ?? now(),
                     'title' => 'Uzpilde',
                     // Noformē litrus un summu ar 2 zīmēm aiz komata
-                    'subtitle' => $carLabel.' — '.number_format((float) $f->liters, 2).' L, '.number_format((float) $f->total_eur, 2).' €',
+                    'subtitle' => $carLabel.' - '.number_format((float) $f->liters, 2).' L, '.number_format((float) $f->total_eur, 2).' €',
                 ]);
             }
         }
@@ -251,7 +251,7 @@ class DashboardController extends Controller
             $items->push([
                 'ts' => $ev->created_at ?? now(),
                 'title' => 'Notikums: '.$ev->title,
-                'subtitle' => $date->format('Y-m-d').' — '.(string) $ev->description,
+                'subtitle' => $date->format('Y-m-d').' - '.(string) $ev->description,
             ]);
         }
 

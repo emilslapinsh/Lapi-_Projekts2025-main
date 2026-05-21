@@ -297,7 +297,7 @@
                     eventDidMount: function (info) {
                         const desc = (info.event.extendedProps && info.event.extendedProps.description) || '';
                         const t = info.event.title || '';
-                        info.el.title = desc ? t + ' — ' + desc : t;
+                        info.el.title = desc ? t + ' - ' + desc : t;
                     },
 
                     // Klikšķis uz dienas atver izveides logu

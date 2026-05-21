@@ -216,7 +216,7 @@
                                         € / km (aptuveni)
                                     </div>
                                     <div class="mt-2 text-2xl font-bold tabular-nums text-zinc-100">
-                                        {{ $stats['per_km'] !== null ? number_format($stats['per_km'], 4) . ' €' : '—' }}
+                                        {{ $stats['per_km'] !== null ? number_format($stats['per_km'], 4) . ' €' : '-' }}
                                     </div>
                                 </div>
                                 <div class="rounded-xl bg-zinc-950/50 p-4 ring-1 ring-white/5">
@@ -224,7 +224,7 @@
                                         Pēdējais nobraukums
                                     </div>
                                     <div class="mt-2 text-2xl font-bold tabular-nums text-zinc-100">
-                                        {{ $stats['last_mileage'] !== null ? number_format($stats['last_mileage']) . ' km' : '—' }}
+                                        {{ $stats['last_mileage'] !== null ? number_format($stats['last_mileage']) . ' km' : '-' }}
                                     </div>
                                 </div>
                             </div>
@@ -369,16 +369,16 @@
                                         class="mt-2 w-full rounded-xl bg-zinc-950/60 px-4 py-3 text-base ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
                                     >
                                         <option value="date_desc" @selected($sort === 'date_desc')>
-                                            Datums — jaunākie pirmie
+                                            Datums - jaunākie pirmie
                                         </option>
                                         <option value="date_asc" @selected($sort === 'date_asc')>
-                                            Datums — vecākie pirmie
+                                            Datums - vecākie pirmie
                                         </option>
                                         <option value="amount_desc" @selected($sort === 'amount_desc')>
-                                            Summa — lielākās pirmās
+                                            Summa - lielākās pirmās
                                         </option>
                                         <option value="amount_asc" @selected($sort === 'amount_asc')>
-                                            Summa — mazākās pirmās
+                                            Summa - mazākās pirmās
                                         </option>
                                     </select>
                                 </div>
@@ -551,16 +551,16 @@
                                                     {{ number_format($e->amount, 2) }} €
                                                 </td>
                                                 <td class="py-3 whitespace-nowrap">
-                                                    {{ $e->mileage ? $e->mileage . ' km' : '—' }}
+                                                    {{ $e->mileage ? $e->mileage . ' km' : '-' }}
                                                 </td>
                                                 <td
                                                     class="py-3 max-w-[200px] truncate text-zinc-300"
                                                     title="{{ $e->description }}"
                                                 >
-                                                    {{ $e->description ?? '—' }}
+                                                    {{ $e->description ?? '-' }}
                                                 </td>
                                                 <td class="py-3 whitespace-nowrap text-zinc-400">
-                                                    {{ $e->user->username ?? '—' }}
+                                                    {{ $e->user->username ?? '-' }}
                                                 </td>
                                                 <td class="py-3 text-right whitespace-nowrap">
                                                     <div class="flex flex-wrap justify-end gap-2">

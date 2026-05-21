@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<?php // Sākumlapa — īss apraksts iespējām un saites uz pieslēgšanos vai paneli ?>
+<?php // Sākumlapa - īss apraksts iespējām un saites uz pieslēgšanos vai paneli ?>
 <html lang="lv">
     <head>
         <meta charset="UTF-8" />

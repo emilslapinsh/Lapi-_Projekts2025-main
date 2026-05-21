@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Sākums — Automašīnas apkopes un izdevumu sekošana</title>
+        <title>Sākums - Automašīnas apkopes un izdevumu sekošana</title>
 
         <?php // Pieslēdz projekta stilus un JS ?>
         @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -206,7 +206,7 @@
                 } else if (zoom < 11) {
                     hintEl.textContent = 'DUS un servisi ielādējas. EV uzlādei nepieciešams zoom ≥ 11.';
                 } else {
-                    hintEl.textContent = 'Vari pārvietot karti — lokācijas tiek atlasītas redzamajā apgabalā.';
+                    hintEl.textContent = 'Vari pārvietot karti - lokācijas tiek atlasītas redzamajā apgabalā.';
                 }
             }
 
@@ -276,7 +276,7 @@
             let fetchTimer = null;
             let activeFetch = null;
             let fetchSeq = 0;
-            // Neierosina API katru pikseļa pārvietojumu — īss debounce
+            // Neierosina API katru pikseļa pārvietojumu
             function scheduleFetch() {
                 if (fetchTimer) clearTimeout(fetchTimer);
                 fetchTimer = setTimeout(fetchLocations, 350);
@@ -384,7 +384,6 @@
                     renderList();
                     updateHint();
                 } catch (err) {
-                    // Aborts ir paredzēts — klusējam
                     if (err && err.name === 'AbortError') {
                         return;
                     }

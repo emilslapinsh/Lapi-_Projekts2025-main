@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<?php // Sesijas profils — lasāmi identifikācijas dati bez rediģēšanas formas ?>
+<?php // Sesijas profils - lasāmi identifikācijas dati bez rediģēšanas formas ?>
 <html lang="lv">
     <head>
         <meta charset="UTF-8" />
