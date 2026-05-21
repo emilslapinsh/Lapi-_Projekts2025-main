@@ -1,4 +1,4 @@
-<?php // Production-safe asset tags: always /build/... (same host + protocol as the page) ?>
+<?php // Assets: built files from /build + Tailwind CDN fallback for hosting ?>
 @if (app()->environment('local') && file_exists(public_path('hot')))
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 @else
@@ -15,6 +15,7 @@
     @if ($cssFile)
         <link rel="stylesheet" href="/build/{{ $cssFile }}" />
     @endif
+    <script src="https://cdn.tailwindcss.com"></script>
     @if ($jsFile)
         <script type="module" src="/build/{{ $jsFile }}"></script>
     @endif
