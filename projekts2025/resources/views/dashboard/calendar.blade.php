@@ -6,7 +6,7 @@
         <title>Apkopes kalendārs</title>
 
         <?php // Pieslēdz projekta stilus un JS ?>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.vite-assets')
 
         <?php // FullCalendar stili kalendāram ?>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" />

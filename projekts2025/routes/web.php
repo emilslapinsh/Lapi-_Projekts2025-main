@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 
 // Publiski: welcome, pieslēgšanās un reģistrācija
 
+Route::redirect('/', '/welcome');
+
 // Welcome lapa
 Route::get('/welcome', function () {
     return view('welcome');

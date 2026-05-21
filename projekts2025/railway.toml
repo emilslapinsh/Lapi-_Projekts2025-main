@@ -1,0 +1,5 @@
+[build]
+buildCommand = "composer install --no-dev --optimize-autoloader && npm install --no-audit --no-fund && npm run build"
+
+[deploy]
+startCommand = "php artisan config:clear && npm run build && php artisan migrate --force && php -S 0.0.0.0:${PORT:-8080} -t public public/index.php"

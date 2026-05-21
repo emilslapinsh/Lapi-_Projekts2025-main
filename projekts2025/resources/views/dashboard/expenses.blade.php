@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Izdevumu pārvaldība</title>
         <?php // Pieslēdz projekta stilus un JS ?>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.vite-assets')
         <?php // Flatpickr stili datumu izvēlei ?>
         @include('partials.flatpickr-lv-head')
     </head>

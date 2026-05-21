@@ -6,7 +6,7 @@
         <title>Sākums - Automašīnas apkopes un izdevumu sekošana</title>
 
         <?php // Pieslēdz projekta stilus un JS ?>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.vite-assets')
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">

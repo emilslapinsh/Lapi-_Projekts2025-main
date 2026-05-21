@@ -1,6 +1,6 @@
 /.phpunit.cache
 /node_modules
-/public/build
+# /public/build — committed so Railway always has CSS/JS even if build step artifacts are missing
 /public/hot
 /public/storage
 /storage/*.key
