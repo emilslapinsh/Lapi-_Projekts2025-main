@@ -274,12 +274,11 @@
             }
 
             let fetchTimer = null;
-            let activeFetch = null;
-            let fetchSeq = 0;
+            let fetchInFlight = false;
             // Neierosina API katru pikseļa pārvietojumu
             function scheduleFetch() {
                 if (fetchTimer) clearTimeout(fetchTimer);
-                fetchTimer = setTimeout(fetchLocations, 350);
+                fetchTimer = setTimeout(fetchLocations, 500);
             }
 
             // Backend ierobežo smago pieprasījumu skaitu zem zema zoom
@@ -291,8 +290,13 @@
                 return zoom >= 10;
             }
 
-            // Ielādē lokācijas json pēc bbox + zoom + tips; atceļ iepriekšējo pieprasījumu
+            // Ielādē lokācijas json pēc bbox + zoom + tips
             async function fetchLocations() {
+                if (fetchInFlight) {
+                    scheduleFetch();
+                    return;
+                }
+
                 const zoom = map.getZoom();
                 if (!shouldFetchAtZoom(currentFilter, zoom)) {
                     allMarkers = [];
@@ -305,27 +309,15 @@
                 const bbox = bboxString();
                 const url = `/api/locations?bbox=${encodeURIComponent(bbox)}&zoom=${zoom}&type=${encodeURIComponent(currentFilter)}`;
 
+                fetchInFlight = true;
+                hintEl.textContent = 'Ielādē...';
+
                 try {
-                    fetchSeq += 1;
-                    const mySeq = fetchSeq;
-
-                    if (activeFetch) {
-                        activeFetch.abort();
-                    }
-                    activeFetch = new AbortController();
-
-                    hintEl.textContent = 'Ielādē...';
-
-                    const res = await fetch(url, { signal: activeFetch.signal });
+                    const res = await fetch(url);
                     if (!res.ok) {
                         throw new Error(`HTTP ${res.status}`);
                     }
                     const locations = await res.json();
-
-                    // Ja paralēli sūtīts jaunāks pieprasījums, šo atbildi neņem vērā
-                    if (mySeq !== fetchSeq) {
-                        return;
-                    }
 
                     allMarkers = [];
                     clusterGroup.clearLayers();
@@ -382,12 +374,16 @@
                     });
 
                     renderList();
-                    updateHint();
-                } catch (err) {
-                    if (err && err.name === 'AbortError') {
-                        return;
+                    if (locations.length === 0) {
+                        hintEl.textContent =
+                            'Šajā skatā nav punktu. Pietuvini (zoom ≥ 10) vai pagaidi — dati nāk no OpenStreetMap.';
+                    } else {
+                        updateHint();
                     }
+                } catch (err) {
                     hintEl.textContent = 'Neizdevās ielādēt lokācijas. Pamēģini vēlreiz pēc brīža.';
+                } finally {
+                    fetchInFlight = false;
                 }
             }
 

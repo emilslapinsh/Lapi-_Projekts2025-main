@@ -92,17 +92,22 @@ class MapController extends Controller
             return $cached;
         }
 
-        // Ielasa katru tipu atsevišķi un apvieno
+        // Ielasa katru tipu atsevišķi (Nominatim: max ~1 pieprasījums sekundē)
         $merged = [];
-        foreach ($types as $t) {
+        foreach ($types as $i => $t) {
+            if ($i > 0) {
+                usleep(1_100_000);
+            }
             $merged = array_merge($merged, $this->fetchNominatimSingleUncached($bbox, $zoom, $t));
         }
 
         // Noņem dublikātus pēc koordinātēm un tipa
         $merged = $this->dedupeLocations($merged);
 
-        // Keša laiks ir garāks, ja ir dati, īsāks, ja rezultāts tukšs
-        Cache::put($cacheKey, $merged, now()->addMinutes(count($merged) > 0 ? 20 : 2));
+        // Tukšu rezultātu nekešē — citādi pēc rate limit kartē ilgi paliek tukša
+        if (count($merged) > 0) {
+            Cache::put($cacheKey, $merged, now()->addMinutes(20));
+        }
 
         return $merged;
     }
@@ -124,8 +129,9 @@ class MapController extends Controller
         $data = $this->fetchNominatimSingleUncached($bbox, $zoom, $type);
         $data = $this->dedupeLocations($data);
 
-        // Keša laiks ir garāks, ja ir dati, īsāks, ja rezultāts tukšs
-        Cache::put($cacheKey, $data, now()->addMinutes(count($data) > 0 ? 20 : 2));
+        if (count($data) > 0) {
+            Cache::put($cacheKey, $data, now()->addMinutes(20));
+        }
 
         return $data;
     }
@@ -174,36 +180,17 @@ class MapController extends Controller
         $contact = $email !== '' ? ('; contact: '.$email) : '';
         $userAgent = $appName.' / karte'.$contact;
 
-        // Veic pieprasījumu uz Nominatim
+        // Veic pieprasījumu uz Nominatim (viena atkārtota mēģinājuma iespēja pēc rate limit)
         try {
-            $headers = [
-                'User-Agent' => $userAgent,
-                'Accept-Language' => 'lv',
-            ];
-
-            // Ja ir derīgs e-pasts, pieliek From headeri
-            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $headers['From'] = $email;
+            $resp = $this->nominatimRequest($url, $phrase, $viewbox, $limit, $userAgent, $email);
+            if (! $resp->ok() && in_array($resp->status(), [429, 503], true)) {
+                usleep(2_000_000);
+                $resp = $this->nominatimRequest($url, $phrase, $viewbox, $limit, $userAgent, $email);
             }
-
-            $resp = Http::withHeaders($headers)
-                ->timeout(12)
-                ->connectTimeout(4)
-                ->get($url, [
-                    'format' => 'jsonv2',
-                    'q' => $phrase,
-                    'bounded' => 1,
-                    'viewbox' => $viewbox,
-                    'countrycodes' => 'lv',
-                    'limit' => $limit,
-                    'addressdetails' => 1,
-                    'dedupe' => 0,
-                ]);
         } catch (\Throwable $e) {
             return [];
         }
 
-        // Ja serviss neatbild korekti, atgriež tukšu
         if (! $resp->ok()) {
             return [];
         }
@@ -247,6 +234,39 @@ class MapController extends Controller
         }
 
         return $out;
+    }
+
+    // HTTP pieprasījums uz Nominatim ar obligāto User-Agent
+    private function nominatimRequest(
+        string $url,
+        string $phrase,
+        string $viewbox,
+        int $limit,
+        string $userAgent,
+        string $email
+    ) {
+        $headers = [
+            'User-Agent' => $userAgent,
+            'Accept-Language' => 'lv',
+        ];
+
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $headers['From'] = $email;
+        }
+
+        return Http::withHeaders($headers)
+            ->timeout(15)
+            ->connectTimeout(5)
+            ->get($url, [
+                'format' => 'jsonv2',
+                'q' => $phrase,
+                'bounded' => 1,
+                'viewbox' => $viewbox,
+                'countrycodes' => 'lv',
+                'limit' => $limit,
+                'addressdetails' => 1,
+                'dedupe' => 0,
+            ]);
     }
 
     // Pārbauda, vai Nominatim ieraksts atbilst pieprasītajam tipam
@@ -405,12 +425,13 @@ class MapController extends Controller
         $west = max($west, $lvWest);
         $east = min($east, $lvEast);
 
-        // Ierobežo bbox izmēru, lai pieprasījums nebūtu pārāk liels
+        // Ierobežo bbox izmēru (pārāk stingrs limits Rīgā/atlasē lika tukšu karti)
         $maxSpan = match (true) {
-            $zoom >= 12 => 1.2,
-            $zoom >= 11 => 1.8,
-            $zoom >= 10 => 3.0,
-            default => 6.0,
+            $zoom >= 14 => 1.2,
+            $zoom >= 12 => 2.5,
+            $zoom >= 11 => 4.0,
+            $zoom >= 10 => 7.5,
+            default => 8.0,
         };
 
         // Bbox augstums un platums grādos nedrīkst pārsniegt maxSpan
