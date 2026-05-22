@@ -182,7 +182,7 @@
                                 Eksportēt Excel
                             </a>
                             <p class="text-sm text-zinc-400">
-                                Formatēta tabula ar kolonnām un virsrakstiem — ērtāk lasāma Excel.
+                                
                             </p>
                         </div>
 
