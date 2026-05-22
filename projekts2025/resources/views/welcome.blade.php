@@ -122,7 +122,7 @@
                             <li class="flex gap-2">
                                 <span class="text-red-400">•</span>
                                 <span>
-                                    CSV eksports – lai datus var viegli atvērt Excel un saglabāt rezerves kopijās.
+                                    Excel eksports – formatēta tabula ar kolonnām, ērti lasāma un saglabājama kā rezerves kopija.
                                 </span>
                             </li>
                             <li class="flex gap-2">

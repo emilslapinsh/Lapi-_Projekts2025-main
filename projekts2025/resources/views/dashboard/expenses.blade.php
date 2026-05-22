@@ -234,7 +234,7 @@
                                     href="{{ route('expenses.export', ['car_id' => $selectedCar->id]) }}"
                                     class="inline-flex rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                                 >
-                                    Eksportēt
+                                    Eksportēt Excel
                                 </a>
                                 <a
                                     href="{{ route('degviela.index', ['car_id' => $selectedCar->id]) }}"

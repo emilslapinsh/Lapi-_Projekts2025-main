@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreFuelRequest;
 use App\Models\FuelEntry;
+use App\Support\FormattedSpreadsheetExport;
 use App\Services\FuelAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // Degvielas sadaļas darbības
-// Parāda uzpildes un analītiku, saglabā un dzēš ierakstus, eksportē CSV
+// Parāda uzpildes un analītiku, saglabā un dzēš ierakstus, eksportē Excel
 class FuelController extends Controller
 {
     // Degvielas lapa ar uzpildēm un analītiku
@@ -166,7 +167,7 @@ class FuelController extends Controller
             ->with('success', 'Uzpildes ieraksts dzēsts.');
     }
 
-    // Eksportē uzpildes CSV failā
+    // Eksportē uzpildes formatētā Excel tabulā
     public function export(Request $request): StreamedResponse
     {
         // Pašreizējais lietotājs un izvēlētais auto
@@ -174,63 +175,60 @@ class FuelController extends Controller
         $carId = (int) $request->query('car_id');
 
         // Pārbauda, vai lietotājam ir apstiprināta pieeja auto
-        $hasAccess = $user->cars()
+        $car = $user->cars()
             ->wherePivot('confirmed', true)
             ->where('cars.id', $carId)
-            ->exists();
+            ->first();
 
         // Bloķē, ja auto nav pieejams lietotājam
-        abort_unless($hasAccess, 403);
+        abort_unless($car, 403);
 
         // Ielasa rindas eksportam
-        $rows = FuelEntry::query()
+        $entries = FuelEntry::query()
             ->where('car_id', $carId)
             ->orderBy('date')
             ->orderBy('odometer_km')
             ->get();
 
-        // Sagatavo faila nosaukumu
-        $filename = 'degviela_'.$carId.'_'.now()->format('Ymd_His').'.csv';
+        $safeName = preg_replace('/[^A-Za-z0-9_-]+/', '_', $car->brand.'_'.$car->model) ?: 'auto';
+        $filename = 'degviela_'.$safeName.'_'.now()->format('Ymd_His').'.xls';
 
-        // Izvada CSV straumē
-        return response()->streamDownload(function () use ($rows) {
-            $out = fopen('php://output', 'w');
+        $rows = [];
+        foreach ($entries as $r) {
+            $rows[] = [
+                $r->date?->format('d.m.Y') ?? '',
+                number_format((int) $r->odometer_km, 0, '', ' '),
+                number_format((float) $r->liters, 2, '.', ''),
+                number_format((float) $r->total_eur, 2, '.', ''),
+                $r->price_per_liter !== null ? number_format((float) $r->price_per_liter, 3, '.', '') : '',
+                $r->fuel_type ?? '',
+                $r->is_full_tank ? 'Jā' : 'Nē',
+                $r->station ?? '',
+                $r->note ?? '',
+            ];
+        }
 
-            // UTF-8 BOM, lai Excel pareizi lasa latviešu burtus
-            fwrite($out, "\xEF\xBB\xBF");
-
-            // Kolonnu virsraksti
-            fputcsv($out, [
+        return FormattedSpreadsheetExport::download(
+            $filename,
+            'Degvielas uzpildes',
+            [
+                ['Auto', $car->brand.' '.$car->model.' ('.$car->year.')'],
+                ['Eksportēts', now()->format('d.m.Y H:i')],
+                ['Ierakstu skaits', (string) $entries->count()],
+            ],
+            [
                 'Datums',
-                'Odometrs_km',
+                'Odometrs (km)',
                 'Litri',
-                'Summa_EUR',
-                'EUR_par_litru',
-                'Degvielas_veids',
-                'Pilna_baka',
+                'Summa (EUR)',
+                'EUR/l',
+                'Degvielas veids',
+                'Pilna bāka',
                 'Stacija',
-                'Piezime',
-            ]);
-
-            // Datu rindas
-            foreach ($rows as $r) {
-                // EUR par litru tiek rēķināts modelī no total_eur un liters
-                fputcsv($out, [
-                    $r->date?->format('Y-m-d'),
-                    $r->odometer_km,
-                    $r->liters,
-                    $r->total_eur,
-                    $r->price_per_liter,
-                    $r->fuel_type,
-                    $r->is_full_tank ? 'Jā' : 'Nē',
-                    $r->station,
-                    $r->note,
-                ]);
-            }
-
-            fclose($out);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+                'Piezīme',
+            ],
+            $rows,
+            ['left', 'right', 'right', 'right', 'right', 'left', 'center', 'left', 'left'],
+        );
     }
 }

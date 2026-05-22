@@ -173,16 +173,16 @@
                     </div>
 
                     @if ($selectedCar)
-                        <?php // Eksports uz CSV ?>
+                        <?php // Eksports uz Excel ?>
                         <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                             <a
                                 href="{{ route('degviela.export', ['car_id' => $selectedCar->id]) }}"
                                 class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500"
                             >
-                                Eksportēt CSV
+                                Eksportēt Excel
                             </a>
                             <p class="text-sm text-zinc-400">
-                                CSV satur visus ierakstus šim auto (ar UTF-8 kodējumu Excel atbalstam).
+                                Formatēta tabula ar kolonnām un virsrakstiem — ērtāk lasāma Excel.
                             </p>
                         </div>
 

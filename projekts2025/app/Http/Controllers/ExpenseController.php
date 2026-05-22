@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Car;
 use App\Models\Expense;
 use App\Support\ExpenseTypes;
+use App\Support\FormattedSpreadsheetExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // Izdevumu ierakstu darbības
-// Pievieno, atjaunina, dzēš izdevumus, eksportē CSV un pārbauda piekļuvi auto
+// Pievieno, atjaunina, dzēš izdevumus, eksportē Excel un pārbauda piekļuvi auto
 class ExpenseController extends Controller
 {
     // Saglabā jaunu izdevumu ierakstu
@@ -118,7 +119,7 @@ class ExpenseController extends Controller
             ->with('success', 'Izdevums dzēsts.');
     }
 
-    // Eksportē izdevumus CSV failā
+    // Eksportē izdevumus formatētā Excel tabulā
     public function export(Request $request): StreamedResponse
     {
         // Pārbauda, ka ir norādīts auto
@@ -139,45 +140,32 @@ class ExpenseController extends Controller
 
         // Izveido drošu faila nosaukumu
         $safeName = preg_replace('/[^A-Za-z0-9_-]+/', '_', $car->brand.'_'.$car->model) ?: 'auto';
-        $filename = 'izdevumi_'.$safeName.'_'.now()->format('Ymd_His').'.csv';
+        $filename = 'izdevumi_'.$safeName.'_'.now()->format('Ymd_His').'.xls';
 
-        // Izvada CSV straumē
-        return response()->streamDownload(function () use ($expenses, $car) {
-            $out = fopen('php://output', 'w');
+        $rows = [];
+        foreach ($expenses as $e) {
+            $rows[] = [
+                $e->date?->format('d.m.Y') ?? '',
+                $e->type,
+                number_format((float) $e->amount, 2, '.', ''),
+                $e->mileage !== null ? number_format((int) $e->mileage, 0, '', ' ') : '',
+                $e->description ?? '',
+                optional($e->user)->username ?? '—',
+            ];
+        }
 
-            // UTF-8 BOM, lai Excel pareizi lasa latviešu burtus
-            fwrite($out, "\xEF\xBB\xBF");
-
-            // Virsraksts ar auto informāciju
-            fputcsv($out, ['Auto', $car->brand.' '.$car->model.' ('.$car->year.')']);
-            fputcsv($out, []);
-
-            // Kolonnu virsraksti
-            fputcsv($out, [
-                'Datums',
-                'Tips',
-                'Summa_EUR',
-                'Nobraukums_km',
-                'Apraksts',
-                'Pievienoja',
-            ]);
-
-            // Datu rindas
-            foreach ($expenses as $e) {
-                fputcsv($out, [
-                    $e->date,
-                    $e->type,
-                    $e->amount,
-                    $e->mileage ?? '',
-                    $e->description ?? '',
-                    optional($e->user)->username ?? '-',
-                ]);
-            }
-
-            fclose($out);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        return FormattedSpreadsheetExport::download(
+            $filename,
+            'Izdevumu pārskats',
+            [
+                ['Auto', $car->brand.' '.$car->model.' ('.$car->year.')'],
+                ['Eksportēts', now()->format('d.m.Y H:i')],
+                ['Ierakstu skaits', (string) $expenses->count()],
+            ],
+            ['Datums', 'Tips', 'Summa (EUR)', 'Nobraukums (km)', 'Apraksts', 'Pievienoja'],
+            $rows,
+            ['left', 'left', 'right', 'right', 'left', 'left'],
+        );
     }
 
     // Pārbauda, vai lietotājam ir pieeja izdevuma auto
