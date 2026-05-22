@@ -33,16 +33,18 @@
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
         <?php // Fona vizuālais efekts ?>
+                <?php // Fona gradients un glow slÄÅ†i ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-zinc-700/10 blur-3xl"></div>
         </div>
 
         <div class="relative mx-auto min-h-screen max-w-6xl px-6">
             <?php // Galvene ar navigāciju ?>
             <header class="flex items-center justify-between py-8">
                 <div>
-                    <h1 class="text-2xl font-bold uppercase">Apkopes kalendārs</h1>
+                    <h1 class="text-2xl font-bold uppercase text-zinc-100">Apkopes kalendārs</h1>
                     <p class="mt-1 text-sm text-zinc-400">
                         Plānojiet auto apkopes un citus ar transportu saistītus notikumus.
                     </p>
@@ -51,7 +53,7 @@
                 <div class="flex items-center gap-3">
                     <a
                         href="{{ route('home') }}"
-                        class="rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                        class="rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                     >
                         Uz paneli
                     </a>
@@ -90,7 +92,7 @@
                         <button
                             type="button"
                             id="addEventBtn"
-                            class="shrink-0 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                            class="rounded-lg bg-red-600 font-semibold text-white hover:bg-red-500 shrink-0 px-5 py-3 text-sm"
                         >
                             Pievienot notikumu
                         </button>
@@ -173,14 +175,14 @@
                             <button
                                 type="button"
                                 id="cancelModalBtn"
-                                class="rounded-xl bg-zinc-800 px-5 py-3 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                class="rounded-lg bg-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                             >
                                 Atcelt
                             </button>
                             <button
                                 type="button"
                                 id="saveEventBtn"
-                                class="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                                class="rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
                             >
                                 Saglabāt
                             </button>
@@ -286,6 +288,10 @@
                 const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
                     initialView: 'dayGridMonth',
                     locale: 'lv',
+                    // Poga "today" nāk no FullCalendar — pārrakstām latviski
+                    buttonText: {
+                        today: 'Šodiena',
+                    },
                     firstDay: 1,
                     height: 'auto',
                     dayMaxEvents: 4,

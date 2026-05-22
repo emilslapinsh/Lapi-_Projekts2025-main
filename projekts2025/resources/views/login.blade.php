@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+<?php // Pieslēgšanās forma ?>
 <html lang="lv">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Pieslēgties</title>
-
         @include('partials.vite-assets')
     </head>
 

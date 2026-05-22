@@ -1,4 +1,4 @@
-<?php // Assets: built files from /build + Tailwind CDN fallback for hosting ?>
+<?php // Produkcijas droši stili no /build un Tailwind CDN rezerve hostingam ?>
 @if (app()->environment('local') && file_exists(public_path('hot')))
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 @else

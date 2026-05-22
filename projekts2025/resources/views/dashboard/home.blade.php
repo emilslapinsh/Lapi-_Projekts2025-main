@@ -10,7 +10,7 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
-        <?php // Fona “glow” efekts ?>
+        <?php // Fona gradients un glow slānis ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -114,7 +114,7 @@
 
                             <a
                                 href="{{ route('calendar') }}"
-                                class="inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-500"
+                                class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-500"
                             >
                                 Atvērt kalendāru
                             </a>
@@ -135,13 +135,13 @@
                         <div class="mt-4 flex gap-3 sm:mt-0">
                             <a
                                 href="{{ url('/karte') }}"
-                                class="inline-flex items-center justify-center rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
+                                class="rounded-lg bg-zinc-800 px-5 py-2.5 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                             >
                                 Atvērt karti
                             </a>
                             <a
                                 href="{{ url('/izdevumi') }}"
-                                class="inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-2.5 text-base font-semibold text-white hover:bg-red-500"
+                                class="rounded-lg bg-red-600 px-5 py-2.5 text-base font-semibold text-white hover:bg-red-500"
                             >
                                 Pievienot izdevumu
                             </a>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<?php // Sākumlapa - īss apraksts iespējām un saites uz pieslēgšanos vai paneli ?>
+<?php // Sākumlapa — īss apraksts iespējām un saites uz pieslēgšanos vai paneli ?>
 <html lang="lv">
     <head>
         <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
     </head>
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
-        <?php // Fons un „glow” slānis virs pamatkrāsas ?>
+        <?php // Fons un glow slānis virs pamatkrāsas ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -160,7 +160,6 @@
                     </section>
                 @endguest
             </main>
-
         </div>
     </body>
 </html>

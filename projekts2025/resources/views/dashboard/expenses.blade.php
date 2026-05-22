@@ -12,6 +12,7 @@
 
     <body class="min-h-screen bg-zinc-950 text-zinc-100">
         <?php // Fona gradients un gaismas efekti ?>
+                <?php // Fona gradients un glow slÄÅ†i ?>
         <div class="pointer-events-none fixed inset-0">
             <div class="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900"></div>
             <div class="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-red-600/20 blur-3xl"></div>
@@ -30,7 +31,7 @@
             <?php // Galvene ar aprakstu un navigāciju ?>
             <header class="flex flex-col gap-4 py-8 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-wide text-zinc-100 uppercase">Izdevumu pārvaldība</h1>
+                    <h1 class="text-2xl font-bold tracking-wide uppercase text-zinc-100">Izdevumu pārvaldība</h1>
                     <p class="mt-1 max-w-2xl text-sm text-zinc-400">
                         Izdevumu žurnāls, kopsavilkums un analītika. Degvielu reģistrē atsevišķi sadaļā
                         <a
@@ -142,7 +143,7 @@
                 <div class="{{ $tab === 'izdevumi' ? '' : 'hidden' }} space-y-6">
                     @if ($cars->isEmpty())
                         <?php // Ja nav pievienots neviens auto, rāda pamācību ?>
-                        <section class="rounded-2xl bg-zinc-900/50 p-8 text-center ring-1 ring-white/10">
+                        <section class="rounded-2xl bg-zinc-900/50 p-8 ring-1 ring-white/10 text-center">
                             <p class="text-sm text-zinc-400">
                                 Vēl nav pievienots neviens auto. Sadaļā
                                 <a
@@ -231,13 +232,13 @@
                             <div class="mt-4 flex flex-wrap gap-3">
                                 <a
                                     href="{{ route('expenses.export', ['car_id' => $selectedCar->id]) }}"
-                                    class="inline-flex rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                    class="inline-flex rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                                 >
                                     Eksportēt
                                 </a>
                                 <a
                                     href="{{ route('degviela.index', ['car_id' => $selectedCar->id]) }}"
-                                    class="inline-flex rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                    class="inline-flex rounded-lg bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                                 >
                                     Uz degvielas žurnālu
                                 </a>
@@ -415,7 +416,7 @@
                                     </button>
                                     <a
                                         href="{{ route('izdevumi.index', ['tab' => 'izdevumi', 'car_id' => $selectedCar->id]) }}"
-                                        class="inline-flex w-full items-center justify-center rounded-xl bg-zinc-800 px-4 py-3 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700 sm:w-auto"
+                                        class="inline-flex w-full items-center justify-center rounded-lg bg-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700 sm:w-auto"
                                     >
                                         Notīrīt
                                     </a>
@@ -512,7 +513,7 @@
                                 </div>
                                 <button
                                     type="submit"
-                                    class="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                                    class="rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
                                 >
                                     Saglabāt izdevumu
                                 </button>
@@ -566,7 +567,7 @@
                                                     <div class="flex flex-wrap justify-end gap-2">
                                                         <a
                                                             href="#"
-                                                            class="js-edit-expense rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                                            class="js-edit-expense rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                                                             data-expense-id="{{ $e->id }}"
                                                             data-expense-type="{{ $e->type }}"
                                                             data-expense-date="{{ $e->date->format('Y-m-d') }}"
@@ -594,7 +595,7 @@
 
                                                             <button
                                                                 type="submit"
-                                                                class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                                                class="rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                                                             >
                                                                 Dzēst
                                                             </button>
@@ -682,7 +683,7 @@
                             </div>
                             <button
                                 type="submit"
-                                class="w-full rounded-xl bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
+                                class="w-full rounded-lg bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                             >
                                 Pievienot auto
                             </button>
@@ -729,7 +730,7 @@
                                 </div>
                                 <button
                                     type="submit"
-                                    class="w-full rounded-xl bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
+                                    class="w-full rounded-lg bg-zinc-800 px-5 py-3 text-base font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                                 >
                                     Nosūtīt koplietošanas pieprasījumu
                                 </button>
@@ -774,7 +775,7 @@
                                             <input type="hidden" name="tab" value="auto" />
                                             <button
                                                 type="submit"
-                                                class="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 sm:w-auto"
+                                                class="w-full rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 sm:w-auto"
                                             >
                                                 Dzēst šo auto
                                             </button>
@@ -802,7 +803,7 @@
                         <button
                             type="button"
                             id="closeExpenseEditBtn"
-                            class="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                            class="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                         >
                             Aizvērt
                         </button>
@@ -896,13 +897,13 @@
                             <button
                                 type="button"
                                 id="cancelExpenseEditBtn"
-                                class="rounded-xl bg-zinc-800 px-5 py-3 text-sm font-semibold ring-1 ring-white/10 hover:bg-zinc-700"
+                                class="rounded-lg bg-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-100 ring-1 ring-white/10 hover:bg-zinc-700"
                             >
                                 Atcelt
                             </button>
                             <button
                                 type="submit"
-                                class="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
+                                class="rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-500"
                             >
                                 Saglabāt
                             </button>
